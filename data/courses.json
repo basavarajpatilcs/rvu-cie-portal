@@ -1,0 +1,2241 @@
+{
+  "generatedAt": "2026-08-16",
+  "groups": [
+    {
+      "tab": "BTech Sem 1",
+      "programme": "BTech",
+      "semester": "I",
+      "courses": [
+        {
+          "code": "CS1003",
+          "name": "Programming in C",
+          "lead": "Prof.Manasa H C",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Dattatreya P Mankame"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Manasa H C"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof.Neha Najem"
+            },
+            {
+              "section": 4,
+              "faculty": "Dr.S.Kanchana"
+            },
+            {
+              "section": 5,
+              "faculty": "Dr.S.Kanchana"
+            },
+            {
+              "section": 6,
+              "faculty": "Dr.Nathiya"
+            },
+            {
+              "section": 7,
+              "faculty": "Prof.DEEKSHITH S M"
+            },
+            {
+              "section": 8,
+              "faculty": "Prof.DEEKSHITH S M"
+            },
+            {
+              "section": 9,
+              "faculty": "Prof.Mudassira Karishma"
+            }
+          ]
+        },
+        {
+          "code": "CS1309",
+          "name": "Web Technology",
+          "lead": "Prof.Neha Najem",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Rakesh Kumar"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Neha Najem"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof.Rakesh Kumar"
+            },
+            {
+              "section": 4,
+              "faculty": "Prof.Neha Najem"
+            },
+            {
+              "section": 5,
+              "faculty": "Dr.Anusha M S"
+            },
+            {
+              "section": 6,
+              "faculty": "Dr.Anusha M S"
+            },
+            {
+              "section": 7,
+              "faculty": "Dr.Anusha M S"
+            },
+            {
+              "section": 8,
+              "faculty": "Prof.Rakesh Kumar"
+            },
+            {
+              "section": 9,
+              "faculty": "Prof.Neha Najem"
+            }
+          ]
+        },
+        {
+          "code": "CS1806",
+          "name": "Exploring Science",
+          "lead": "Dr.Guttula Durgarao",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Guttula Durgarao"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Guttula Durgarao"
+            },
+            {
+              "section": 3,
+              "faculty": "Dr.Subir Roy"
+            },
+            {
+              "section": 4,
+              "faculty": "Prof.Tuhin Kumar Maji"
+            },
+            {
+              "section": 5,
+              "faculty": "Prof.Tuhin Kumar Maji"
+            }
+          ]
+        },
+        {
+          "code": "CS1812",
+          "name": "Discrete Mathematics and Set Theory",
+          "lead": "Prof.Rekha Satish",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Rekha Satish"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Rekha Satish"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof.Amruthesh"
+            },
+            {
+              "section": 4,
+              "faculty": "Prof.Amruthesh"
+            },
+            {
+              "section": 5,
+              "faculty": "Dr. Shrikant Utagi"
+            },
+            {
+              "section": 6,
+              "faculty": "Dr. Shrikant Utagi"
+            },
+            {
+              "section": 7,
+              "faculty": "Prof.Subhadip Ghosh"
+            },
+            {
+              "section": 8,
+              "faculty": "Dr. Manjunath S"
+            },
+            {
+              "section": 9,
+              "faculty": "Dr. Durgarao"
+            }
+          ]
+        },
+        {
+          "code": "CS1841",
+          "name": "Engineering Explorations",
+          "lead": "Prof.Ramesh S",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Ramesh S"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Harish K R"
+            },
+            {
+              "section": 3,
+              "faculty": "Harish H"
+            },
+            {
+              "section": 4,
+              "faculty": "Prof.Rammohan Bhanumurthy"
+            }
+          ]
+        },
+        {
+          "code": "CS1925",
+          "name": "Yoga and Well Being",
+          "lead": null,
+          "sections": []
+        },
+        {
+          "code": "CS1927",
+          "name": "English Communication",
+          "lead": null,
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Guttula Durgarao"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Shrikant Utagi"
+            },
+            {
+              "section": 3,
+              "faculty": "Dr.Subir Roy"
+            },
+            {
+              "section": 4,
+              "faculty": "Prof.A V Amruthesh Bhat"
+            },
+            {
+              "section": 5,
+              "faculty": "Tuhin Kumar Maji"
+            },
+            {
+              "section": 6,
+              "faculty": "Dr.Ramesh S"
+            },
+            {
+              "section": 7,
+              "faculty": "Subhadip ghosh"
+            },
+            {
+              "section": 8,
+              "faculty": "Rekha Satish"
+            },
+            {
+              "section": 9,
+              "faculty": "Prof.Neha Najem"
+            }
+          ]
+        },
+        {
+          "code": "CS1928",
+          "name": "Constitution of India and Professional Ethics",
+          "lead": "Prof.Shilpa Hiremath",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Ashwini Prasad"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Shilpa Hiremath"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof.Sharath Shetty B R"
+            },
+            {
+              "section": 4,
+              "faculty": "Dr.Srinivas Mishra"
+            },
+            {
+              "section": 5,
+              "faculty": "Prof.Mani Mekalai"
+            }
+          ]
+        },
+        {
+          "code": "CS1929",
+          "name": "Structured Innovation with Design Thinking",
+          "lead": "R S Chidhananda",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Chethan Kumar G"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Chethan Kumar G"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof.Chethan Kumar G"
+            },
+            {
+              "section": 4,
+              "faculty": "Prof.Chethan Kumar G"
+            },
+            {
+              "section": 5,
+              "faculty": "R S Chidhananda"
+            },
+            {
+              "section": 6,
+              "faculty": "R S Chidhananda"
+            },
+            {
+              "section": 7,
+              "faculty": "R S Chidhananda"
+            },
+            {
+              "section": 8,
+              "faculty": "R S Chidhananda"
+            },
+            {
+              "section": 9,
+              "faculty": "N Suresh"
+            }
+          ]
+        },
+        {
+          "code": "XXXX",
+          "name": "Basic Electrical and Electronics Engineering",
+          "lead": "Prof.Roopesh R",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Madderla Chiranjeevi"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Aisiri K S"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof.Shrikruti S Managoli"
+            },
+            {
+              "section": 4,
+              "faculty": "Prof.Shilpa Hiremath"
+            },
+            {
+              "section": 5,
+              "faculty": "Prof. Anushree M K"
+            },
+            {
+              "section": 6,
+              "faculty": "Prof.Roopesh R"
+            },
+            {
+              "section": 7,
+              "faculty": "Dr.Madderla Chiranjeevi"
+            },
+            {
+              "section": 8,
+              "faculty": "Prof.Vasantha Lakshmi"
+            },
+            {
+              "section": 9,
+              "faculty": "Prof.Shrikruti S Managoli"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "BTech Sem 3",
+      "programme": "BTech",
+      "semester": "III",
+      "courses": [
+        {
+          "code": "CS2000",
+          "name": "Design and Analysis of Algorithms",
+          "lead": "Prof.Shoeb Ahmad",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Shoeb Ahmad"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Ishita Chakraborty"
+            },
+            {
+              "section": 3,
+              "faculty": "Dr.Priya W Nandihal"
+            },
+            {
+              "section": 4,
+              "faculty": "Prof.Kalpana Devi S"
+            },
+            {
+              "section": 5,
+              "faculty": "Dr.Harish Naik B M"
+            },
+            {
+              "section": 6,
+              "faculty": "Dr.Suruchi Sabherwal"
+            },
+            {
+              "section": 7,
+              "faculty": "Dr.Priya W Nandihal"
+            },
+            {
+              "section": 8,
+              "faculty": "Dr.Suruchi Sabherwal"
+            },
+            {
+              "section": 9,
+              "faculty": "Prof.Evlin"
+            }
+          ]
+        },
+        {
+          "code": "CS2227",
+          "name": "AI and ML",
+          "lead": "Dr.Sonam V Maju",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Ashwini Kumar Mathur"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Sarasvathi V"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof. N Monesh"
+            },
+            {
+              "section": 4,
+              "faculty": "Dr.Merin Thomas"
+            },
+            {
+              "section": 5,
+              "faculty": "Dr.Sonam V Maju"
+            },
+            {
+              "section": 6,
+              "faculty": "Narmadha T"
+            }
+          ]
+        },
+        {
+          "code": "CS2235",
+          "name": "Data Science",
+          "lead": "Dr.Karthikeyan Periyasami",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Karthikeyan Periyasami"
+            }
+          ]
+        },
+        {
+          "code": "CS2403",
+          "name": "Computer Networks",
+          "lead": "Prof.Aishwarya Singh Gautam",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Sheba Pari N"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Evlin Vidyu Latha P"
+            },
+            {
+              "section": 3,
+              "faculty": "J Sunilkumar"
+            },
+            {
+              "section": 4,
+              "faculty": "Dr.Sumathi HR"
+            },
+            {
+              "section": 5,
+              "faculty": "Dr.Sonam V Maju"
+            },
+            {
+              "section": 6,
+              "faculty": "Prof.Aishwarya Singh Gautam"
+            },
+            {
+              "section": 7,
+              "faculty": "Prof.Lokesh J K"
+            },
+            {
+              "section": 8,
+              "faculty": "Dr.Ishita Chakraborty"
+            },
+            {
+              "section": 9,
+              "faculty": "Prof.Murali Krishna"
+            }
+          ]
+        },
+        {
+          "code": "CS2404",
+          "name": "Internet of Things",
+          "lead": "Dr.Vidya M J",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.V Ramachandran"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Vidya M J"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof.Aisiri K.S"
+            },
+            {
+              "section": 4,
+              "faculty": "Prof.Aishwarya Singh Gautam"
+            },
+            {
+              "section": 5,
+              "faculty": "Prof.Shilpa Hiremath"
+            },
+            {
+              "section": 6,
+              "faculty": "Prof.Anushree M K"
+            },
+            {
+              "section": 7,
+              "faculty": "Dr.Sheela"
+            },
+            {
+              "section": 8,
+              "faculty": "Dr.Sheela"
+            },
+            {
+              "section": 9,
+              "faculty": "Prof.Vijayakumar"
+            }
+          ]
+        },
+        {
+          "code": "CS2405",
+          "name": "Cyber Security",
+          "lead": "Prof.Sheba Pari N",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Sheba Pari N"
+            }
+          ]
+        },
+        {
+          "code": "CS2500",
+          "name": "Cloud Computing & Big Data",
+          "lead": "Dr.Ananya Chakraborty",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Ananya Chakraborty"
+            }
+          ]
+        },
+        {
+          "code": "CS2806",
+          "name": "Calculus",
+          "lead": "Dr.Akhilesh KS",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Akhilesh KS"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr. Hongray"
+            },
+            {
+              "section": 3,
+              "faculty": "Dr.Rekha Satish"
+            },
+            {
+              "section": 4,
+              "faculty": "Dr.Ram Mohan"
+            },
+            {
+              "section": 5,
+              "faculty": "Dr.Manjunath S"
+            },
+            {
+              "section": 6,
+              "faculty": "Dr.Manjunath S"
+            },
+            {
+              "section": 7,
+              "faculty": "Dr.Manjunath S"
+            },
+            {
+              "section": 8,
+              "faculty": "Dr.Sasikala Jeganathan"
+            },
+            {
+              "section": 9,
+              "faculty": "Dr Bhawini P"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "BTech Sem 5",
+      "programme": "BTech",
+      "semester": "V",
+      "courses": [
+        {
+          "code": "CS3215",
+          "name": "Data Analytics and Visualization",
+          "lead": "Prof.Vinod Kumar Raju",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Vinod Kumar Raju"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Vinod Kumar Raju"
+            }
+          ]
+        },
+        {
+          "code": "CS3216",
+          "name": "Time-Series Analysis and Forecasting",
+          "lead": "Prof.Kalpana Devi S",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Kalpana Devi S"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Prashant Adhikari"
+            }
+          ]
+        },
+        {
+          "code": "CS3219",
+          "name": "Computer Vision",
+          "lead": "Dr.Shouvik Chakraborty",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Narendra K C"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Abhishek Kumar Singhai"
+            },
+            {
+              "section": 3,
+              "faculty": "Dr.Debasish Mukherjee"
+            },
+            {
+              "section": 4,
+              "faculty": "Dr.Shouvik Chakraborty"
+            },
+            {
+              "section": 5,
+              "faculty": "Dr.Sheela S"
+            },
+            {
+              "section": 6,
+              "faculty": "Prof.Prashant Adhikari"
+            }
+          ]
+        },
+        {
+          "code": "CS3220",
+          "name": "Natural Language Processing",
+          "lead": "Prof.Khushboo Pandey",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Merin Thomas"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Jeethu V Devasia"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof.Khushboo Pandey"
+            },
+            {
+              "section": 4,
+              "faculty": "Prof.Priyanka S"
+            },
+            {
+              "section": 5,
+              "faculty": "Dr.Roopesh R"
+            },
+            {
+              "section": 6,
+              "faculty": "Prof.Lokesh J K"
+            }
+          ]
+        },
+        {
+          "code": "CS3405",
+          "name": "Ethical Hacking and Penetration Testing",
+          "lead": "Dr.Basavaraj Patil",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Basavaraj Patil"
+            }
+          ]
+        },
+        {
+          "code": "CS3406",
+          "name": "Cybersecurity Governance, Risk and Compliance",
+          "lead": "Dr.Saliha Bathool",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Saliha Bathool"
+            }
+          ]
+        },
+        {
+          "code": "CS3501",
+          "name": "Advanced Cloud computing",
+          "lead": "Prof.Aparna R",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Aparna R"
+            }
+          ]
+        },
+        {
+          "code": "CS3502",
+          "name": "Serverless Computing and Microservices Architecture",
+          "lead": "Prof.Rajendra R",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Rajendra R"
+            }
+          ]
+        },
+        {
+          "code": "CS3703",
+          "name": "Theory of Computation",
+          "lead": "Dr Deepika S",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Sangeeta Bhanja Chaudhuri"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Ananya Chakraborty"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof.Shoeb Ahmad"
+            },
+            {
+              "section": 4,
+              "faculty": "Dr.Sangeeta Bhanja Chaudhuri"
+            },
+            {
+              "section": 5,
+              "faculty": "Prof.Murali Krishna"
+            },
+            {
+              "section": 6,
+              "faculty": "Dr.Sumathi HR"
+            },
+            {
+              "section": 7,
+              "faculty": "Dr Deepika S"
+            },
+            {
+              "section": 8,
+              "faculty": "Dr.Sangeeta Bhanja Chaudhuri"
+            },
+            {
+              "section": 9,
+              "faculty": "Dr.Devaraju"
+            }
+          ]
+        },
+        {
+          "code": "TBD",
+          "name": "MOOC COURSE :Math Modeling and Simulation",
+          "lead": null,
+          "sections": []
+        }
+      ]
+    },
+    {
+      "tab": "BTech Sem 7",
+      "programme": "BTech",
+      "semester": "VII",
+      "courses": [
+        {
+          "code": "CS3235",
+          "name": "Working with Large Language Models (LLMs)",
+          "lead": "Prof.Manjul Krishna Gupta",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Abdul Muqtadeer Ahmed"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Jeethu V Devasia"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof.Manjul Krishna Gupta"
+            },
+            {
+              "section": 4,
+              "faculty": "Prof.Harikumar Vasudevan Pillai Santhibhavan"
+            },
+            {
+              "section": 5,
+              "faculty": "Dr.Madderla Chiranjeevi"
+            }
+          ]
+        },
+        {
+          "code": "CS3XXX",
+          "name": "Professioal Ethics",
+          "lead": "Prof. Bhawini Prasad",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof. Sasikala Jeganathan"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof. Rekha Satish"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof. Akhilesh KS"
+            },
+            {
+              "section": 4,
+              "faculty": "Prof. Akhilesh KS"
+            },
+            {
+              "section": 5,
+              "faculty": "Prof. Bhawini Prasad"
+            },
+            {
+              "section": 6,
+              "faculty": "Prof. Bhawini Prasad"
+            },
+            {
+              "section": 7,
+              "faculty": "Prof. Shrikant Utagi"
+            },
+            {
+              "section": 8,
+              "faculty": "Prof. Shrikant Utagi"
+            },
+            {
+              "section": 9,
+              "faculty": "Prof. Rekha Satish"
+            }
+          ]
+        },
+        {
+          "code": "CS4231",
+          "name": "Fundamentals of Computer Vision",
+          "lead": "Prof.Ashwini Kumar Mathur",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Deepak Murthy"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Ashwini Kumar Mathur"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof.Ashwini Kumar Mathur"
+            },
+            {
+              "section": 4,
+              "faculty": "Dr.Ramakrishnan Varadharajan"
+            },
+            {
+              "section": 5,
+              "faculty": "Dr.Ramakrishnan Varadharajan"
+            }
+          ]
+        },
+        {
+          "code": "CS4233",
+          "name": "Data Visualization and Gen BI",
+          "lead": "Prof.Vinod Kumar Raju",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Vinod Kumar Raju"
+            }
+          ]
+        },
+        {
+          "code": "CS4234",
+          "name": "Big Data Analytics",
+          "lead": "Prof. N Monesh",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof. N Monesh"
+            }
+          ]
+        },
+        {
+          "code": "CS4330",
+          "name": "Mobile Application Development",
+          "lead": "Prof.Rakesh Kumar",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Rakesh Kumar"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Deepak Murthy"
+            }
+          ]
+        },
+        {
+          "code": "CS4430",
+          "name": "Security and privacy in cloud",
+          "lead": "Prof.J Sunilkumar",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.J Sunilkumar"
+            },
+            {
+              "section": 2,
+              "faculty": "G Siva Shanmugam"
+            }
+          ]
+        },
+        {
+          "code": "CS4431",
+          "name": "Machine learning for cyber security",
+          "lead": "Dr.Manish Kumar",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Manish Kumar"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Sarasvathi V"
+            }
+          ]
+        },
+        {
+          "code": "CS4908",
+          "name": "Research Methodology",
+          "lead": "Dr.Suruchi Sabherwal",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Suruchi Sabherwal"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Devaraju"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof.Prashant Adhikari"
+            },
+            {
+              "section": 4,
+              "faculty": "Dr.Anusha M S"
+            },
+            {
+              "section": 5,
+              "faculty": "Prof. Bhawini Prasad"
+            },
+            {
+              "section": 6,
+              "faculty": "Prof.DEEKSHITH S M"
+            },
+            {
+              "section": 7,
+              "faculty": "Dr.Sachin Somra"
+            },
+            {
+              "section": 8,
+              "faculty": "Aashish Khilnani"
+            },
+            {
+              "section": 9,
+              "faculty": "Aashish Khilnani"
+            }
+          ]
+        },
+        {
+          "code": "CS4XXX",
+          "name": "Advanced cloud and future trends",
+          "lead": "G Siva Shanmugam",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Revanasiddappa Bandi"
+            },
+            {
+              "section": 2,
+              "faculty": "G Siva Shanmugam"
+            }
+          ]
+        },
+        {
+          "code": "CS4XXX",
+          "name": "Computer Graphics and Virtual Reality",
+          "lead": "Dr.Srinivas Mishra",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Srinivas Mishra"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Narmadha T"
+            },
+            {
+              "section": 3,
+              "faculty": "Dr.Shyam Mohan J S"
+            },
+            {
+              "section": 4,
+              "faculty": "Dr.V.Ramachandran"
+            },
+            {
+              "section": 5,
+              "faculty": "Prof. Aruna S"
+            },
+            {
+              "section": 6,
+              "faculty": "Prof.Rohith Raju"
+            },
+            {
+              "section": 7,
+              "faculty": "Prof.Aruna S"
+            },
+            {
+              "section": 8,
+              "faculty": "Prof.Rohith Raju"
+            },
+            {
+              "section": 9,
+              "faculty": "Dr.Srinivas Mishra"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "BCA",
+      "programme": "BCA",
+      "semester": "All",
+      "courses": [
+        {
+          "code": "CS1081",
+          "name": "Programming with C",
+          "lead": "Dr.K Thenmozhi",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.K Thenmozhi"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Sharath Shetty"
+            }
+          ]
+        },
+        {
+          "code": "CS1107",
+          "name": "Digital Logic",
+          "lead": "Prof.Maneesh Rajan",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Maneesh Rajan"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Mohammed Danish"
+            }
+          ]
+        },
+        {
+          "code": "CS1108",
+          "name": "Linux and Shell Programming",
+          "lead": "Dr.Mahadev Kalyanrao Patil",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Mahadev Kalyanrao Patil"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Mary Cherian"
+            }
+          ]
+        },
+        {
+          "code": "CS1385",
+          "name": "Web and UX Design",
+          "lead": "Dr.V Balaji",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.V Balaji"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Lavanya V"
+            }
+          ]
+        },
+        {
+          "code": "CS1831",
+          "name": "Elements of Linear Algebra",
+          "lead": "Prof.Subhadip Ghosh",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Subhadip Ghosh"
+            },
+            {
+              "section": 2,
+              "faculty": "Mr.Sharath"
+            }
+          ]
+        },
+        {
+          "code": "CS1908",
+          "name": "Universal Human Values",
+          "lead": "Dr.V Balaji",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.V Balaji"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Mani Mekalai"
+            }
+          ]
+        },
+        {
+          "code": "CS1925",
+          "name": "Yoga and Well Being",
+          "lead": null,
+          "sections": []
+        },
+        {
+          "code": "CS1929",
+          "name": "Structured Innovation with Design Thinking",
+          "lead": "Prof.Chethan Kumar G",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Chethan Kumar G"
+            },
+            {
+              "section": 2,
+              "faculty": "R S Chidhananda"
+            }
+          ]
+        },
+        {
+          "code": "CS2053",
+          "name": "Object Oriented Programming With Java",
+          "lead": "Prof.Sharath Shetty B R",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Sharath Shetty B R"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.K Thenmozhi"
+            }
+          ]
+        },
+        {
+          "code": "CS2201",
+          "name": "Database Management Systems",
+          "lead": "Prof.Mohammed Danish",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Mohammed Danish"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Pranjul Shukla"
+            }
+          ]
+        },
+        {
+          "code": "CS2407",
+          "name": "Computer Networks",
+          "lead": "Prof.Abdul Muqtadeer Ahmed",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Abdul Muqtadeer Ahmed"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Maneesh Rajan"
+            }
+          ]
+        },
+        {
+          "code": "CS2807",
+          "name": "Numerical Methods",
+          "lead": "Dr.Sasikala",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Sasikala"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr. Sasikala"
+            }
+          ]
+        },
+        {
+          "code": "CS3182",
+          "name": "Essentials of Internet of Things",
+          "lead": "Dr.Subharadip Mukherjee",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Subharadip Mukherjee"
+            }
+          ]
+        },
+        {
+          "code": "CS3280",
+          "name": "Introduction to Data Science",
+          "lead": "Dr.Mahadev Patil",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Mahadev Patil"
+            }
+          ]
+        },
+        {
+          "code": "CS3303",
+          "name": "Full Stack Development",
+          "lead": "Prof.Mohammed Danish",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Mohammed Danish"
+            }
+          ]
+        },
+        {
+          "code": "CS3580",
+          "name": "Cloud Computing Essentials",
+          "lead": "Prof.Abhishek Kumar Singhai",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Abhishek Kumar Singhai"
+            }
+          ]
+        },
+        {
+          "code": "CS3804",
+          "name": "Statistics",
+          "lead": "Dr. Shrikant Utagi",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr. Shrikant Utagi"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "BSc",
+      "programme": "BSc",
+      "semester": "All",
+      "courses": [
+        {
+          "code": "CS1081",
+          "name": "Programming with C",
+          "lead": "Prof.Anoop A",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Muralidhar Billa"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Anoop A"
+            }
+          ]
+        },
+        {
+          "code": "CS1104",
+          "name": "Linux and Shell Programming",
+          "lead": "Prof.Mythreyi S N",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Mythreyi S N"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Madugundu Chiranjeevi"
+            }
+          ]
+        },
+        {
+          "code": "CS1150",
+          "name": "Digital Logic and Computer Organisation",
+          "lead": "Dr.Mani Mekalai",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Mani Mekalai"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Mary Cherian"
+            }
+          ]
+        },
+        {
+          "code": "CS1385",
+          "name": "Web and UX Design",
+          "lead": "Prof.Lavanya V",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Lavanya V"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Ashwini Prasad S"
+            }
+          ]
+        },
+        {
+          "code": "CS1831",
+          "name": "Elements of Linear Algebra",
+          "lead": "Dr.Kavya",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Kavya"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Kavya"
+            }
+          ]
+        },
+        {
+          "code": "CS1908",
+          "name": "Universal Human Values",
+          "lead": "Dr.S. Kanchana",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.S. Kanchana"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.S Thiruselvan"
+            }
+          ]
+        },
+        {
+          "code": "CS1925",
+          "name": "Yoga and Well Being",
+          "lead": null,
+          "sections": []
+        },
+        {
+          "code": "CS1929",
+          "name": "Structured Innovation with Design Thinking",
+          "lead": "Prof.N Suresh",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.N Suresh"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.N Suresh"
+            }
+          ]
+        },
+        {
+          "code": "CS2053",
+          "name": "Object Oriented Programming With Java",
+          "lead": "Prof.Rahul Panja",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Rahul Panja"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Ashwini Prasad S"
+            }
+          ]
+        },
+        {
+          "code": "CS2229",
+          "name": "Machine Learning",
+          "lead": "Prof.G Vennira Selvi",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.G Vennira Selvi"
+            }
+          ]
+        },
+        {
+          "code": "CS2235",
+          "name": "Data Science",
+          "lead": "Prof.Muralidhar Billa",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Thirukumaran S"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Muralidhar Billa"
+            }
+          ]
+        },
+        {
+          "code": "CS2807",
+          "name": "Numerical Methods",
+          "lead": "Dr.Akhilesh KS",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Akhilesh KS"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Akhilesh KS"
+            }
+          ]
+        },
+        {
+          "code": "CS3202",
+          "name": "Deep Learning",
+          "lead": "Dr.Thirukumaran S",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.K Lokanayaki"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Thirukumaran S"
+            }
+          ]
+        },
+        {
+          "code": "CS3246",
+          "name": "MLOps in Practice",
+          "lead": "Dr.Subharadip Mukherjee",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Subharadip Mukherjee"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Subharadip Mukherjee"
+            }
+          ]
+        },
+        {
+          "code": "CS3255",
+          "name": "Natural Language Processing",
+          "lead": "Shanthala T N",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Shanthala T N"
+            },
+            {
+              "section": 2,
+              "faculty": "Shanthala T N"
+            }
+          ]
+        },
+        {
+          "code": "CS3301",
+          "name": "Full Stack Development",
+          "lead": "Prof.Shristy Kumari",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Shristy Kumari"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Shristy Kumari"
+            }
+          ]
+        },
+        {
+          "code": "CS3302",
+          "name": "Development of Web Services",
+          "lead": "S Thiruselvan",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "S Thiruselvan"
+            }
+          ]
+        },
+        {
+          "code": "CS3402",
+          "name": "Internet of Things",
+          "lead": "Dr.K Sailaja Kumar",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Anoop A"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.K Sailaja Kumar"
+            }
+          ]
+        },
+        {
+          "code": "CS3452",
+          "name": "Cloud Platforms and Service Models",
+          "lead": "Prof.Madugundu Chiranjeevi",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Madugundu Chiranjeevi"
+            }
+          ]
+        },
+        {
+          "code": "CS3803",
+          "name": "Probability Theory",
+          "lead": "Dr. Ashish Khillani",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr. Ashish Khillani"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr. Ashish Khillani"
+            }
+          ]
+        },
+        {
+          "code": "CS3994",
+          "name": "Human Computer Interaction",
+          "lead": "Prof.S Vinayak",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.S Vinayak"
+            }
+          ]
+        },
+        {
+          "code": "CS3995",
+          "name": "Prompt Engineering",
+          "lead": "Prof.Rahul Panja",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Rahul Panja"
+            }
+          ]
+        },
+        {
+          "code": "CS4151",
+          "name": "IoT and  its Applications",
+          "lead": "Prof.Anoop A",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.G Vennira Selvi"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Anoop A"
+            }
+          ]
+        },
+        {
+          "code": "CS4204",
+          "name": "Generative Models and Prompt Engineering",
+          "lead": "Dr.Baishali Garai",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Baishali Garai"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Sachin Somra"
+            }
+          ]
+        },
+        {
+          "code": "CS4250",
+          "name": "Deep Learning & Neural Networks\n(* AIML Cluster + DS Cluster)",
+          "lead": "Prof.Mythreyi S N",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Mudassira Karishma"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Mythreyi S N"
+            }
+          ]
+        },
+        {
+          "code": "CS4431",
+          "name": "Machine Learnig for Cyber Security",
+          "lead": "Dr.Dr.Saliha Bathool",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Dr.Saliha Bathool"
+            }
+          ]
+        },
+        {
+          "code": "CS4433",
+          "name": "Global Trends in Privacy and  Data Protection",
+          "lead": "Dr.S Thiruselvan",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.S Thiruselvan"
+            }
+          ]
+        },
+        {
+          "code": "CS4712",
+          "name": "VR (Virtual Reality)",
+          "lead": "Prof.Aruna S",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Aruna S"
+            }
+          ]
+        },
+        {
+          "code": "CS4713",
+          "name": "3D Modelling and Metaverse",
+          "lead": "Dr.K Sailaja Kumar",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.K Sailaja Kumar"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "MTech",
+      "programme": "MTech",
+      "semester": "All",
+      "courses": [
+        {
+          "code": "CS5000",
+          "name": "Advanced Data Structures and algorithms",
+          "lead": "Revanasiddappa Bandi",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Revanasiddappa Bandi"
+            }
+          ]
+        },
+        {
+          "code": "CS5200",
+          "name": "Advanced Database Management system",
+          "lead": "Dr.Ashwin M",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Ashwin M"
+            }
+          ]
+        },
+        {
+          "code": "CS5201",
+          "name": "Advanced Machine learning",
+          "lead": "Dr.Sathya",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Sathya"
+            }
+          ]
+        },
+        {
+          "code": "CS5202",
+          "name": "Natural language processing",
+          "lead": null,
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Seema"
+            }
+          ]
+        },
+        {
+          "code": "CS5800",
+          "name": "Mathematics for Computer science",
+          "lead": "Dr.Thotreithem Hongray",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Thotreithem Hongray"
+            }
+          ]
+        },
+        {
+          "code": "CS6200",
+          "name": "Explainable AI",
+          "lead": "Dr.Karthikeyan Periyasami",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Karthikeyan Periyasami"
+            }
+          ]
+        },
+        {
+          "code": "CS6201",
+          "name": "Generative AI and large language models",
+          "lead": "Dr.Rashmi S",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Rashmi S"
+            }
+          ]
+        },
+        {
+          "code": "CS6400",
+          "name": "Network Engineering",
+          "lead": "Dr.Sumathi HR",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Sumathi HR"
+            }
+          ]
+        },
+        {
+          "code": "CS6401",
+          "name": "Cyber Security",
+          "lead": "Dr.Basavaraj Patil",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Basavaraj Patil"
+            }
+          ]
+        },
+        {
+          "code": "CS6500",
+          "name": "Cloud and distributed computing",
+          "lead": "Prof.Rajendra R",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Rajendra R"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "Minors-2023",
+      "programme": "Minors",
+      "semester": "2023 Batch",
+      "courses": [
+        {
+          "code": "CS4710",
+          "name": "Interdisciplinary Project-1",
+          "lead": "K Sailaja Kumar",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "K Sailaja Kumar"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "Minors-2024",
+      "programme": "Minors",
+      "semester": "2024 Batch",
+      "courses": [
+        {
+          "code": "CS3227",
+          "name": "Artificial Intelligence and Machine Learning Fundamentals",
+          "lead": "Prof.Pranjul Shukla",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Pranjul Shukla"
+            },
+            {
+              "section": 2,
+              "faculty": "Dr.Nathiya"
+            }
+          ]
+        },
+        {
+          "code": "CS3210",
+          "name": "Introduction to Generative AI and Prompt Engineering",
+          "lead": "Dr.Baishali Garai",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Baishali Garai"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Manasa H C"
+            }
+          ]
+        },
+        {
+          "code": "CS3614",
+          "name": "Introduction to Fintech Product Development",
+          "lead": "Dr.Shyam Mohan",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Shyam Mohan"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Mahadev Kalyanrao Patil"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof.Vijayakumar"
+            }
+          ]
+        },
+        {
+          "code": "CS2614",
+          "name": "Fundamentals of Blockchain",
+          "lead": "Prof.Rohith Raju",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Rohith Raju"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.J Cynthia"
+            },
+            {
+              "section": 3,
+              "faculty": "Dr.Sathya D"
+            }
+          ]
+        },
+        {
+          "code": "CS3910",
+          "name": "Roadmap for Patent Creation",
+          "lead": "Prof.Harish H",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Harish H"
+            }
+          ]
+        },
+        {
+          "code": "CS3911",
+          "name": "Start Up Practicum 3",
+          "lead": "Prof.N Suresh",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.N Suresh"
+            }
+          ]
+        },
+        {
+          "code": "CS3112",
+          "name": "Perception and Localization",
+          "lead": "Dr.Shouvik Chakraborty",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Shouvik Chakraborty"
+            }
+          ]
+        },
+        {
+          "code": "CS3116",
+          "name": "Elements of Smart Manufacturing",
+          "lead": "Prof.Harish K R",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Harish K R"
+            }
+          ]
+        },
+        {
+          "code": "CS3119",
+          "name": "Introduction to DBMS",
+          "lead": "Dr Deepika S",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr Deepika S"
+            }
+          ]
+        },
+        {
+          "code": "CS3120",
+          "name": "Mobile App Development",
+          "lead": "Dr.Ashwin M",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Ashwin M"
+            }
+          ]
+        },
+        {
+          "code": "CS3810",
+          "name": "Semiconductor Characterization techniques",
+          "lead": "Dr.Subir Roy",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Subir Roy"
+            }
+          ]
+        },
+        {
+          "code": "CS3811",
+          "name": "Semiconductor process modelling using SEMulator3D®",
+          "lead": "Dr.Vidya M J",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Vidya M J"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "Minors-2025",
+      "programme": "Minors",
+      "semester": "2025 Batch",
+      "courses": [
+        {
+          "code": "CS2232",
+          "name": "IT Infrastructure Management and Spreadsheet-Based Data Analysis",
+          "lead": "Dr.Kavya",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Kavya"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Madugundu Chiranjeevi"
+            },
+            {
+              "section": 3,
+              "faculty": "Prof.S Vinayak"
+            }
+          ]
+        },
+        {
+          "code": "CS2233",
+          "name": "Python programming",
+          "lead": "Prof.Shristy Kumari",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Shristy Kumari"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Lavanya V"
+            },
+            {
+              "section": 3,
+              "faculty": "Dr.Harish Naik B M"
+            }
+          ]
+        },
+        {
+          "code": "CS2915",
+          "name": "Introduction to Business finance",
+          "lead": "Prof.Harikumar Vasudevan Pillai Santhibhavan",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Harikumar Vasudevan Pillai Santhibhavan"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.Rajendra R"
+            }
+          ]
+        },
+        {
+          "code": "CS2214",
+          "name": "Introduction to Data Analysis",
+          "lead": "Prof.Khushboo Pandey",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Khushboo Pandey"
+            },
+            {
+              "section": 2,
+              "faculty": "Prof.PRIYANKA S"
+            }
+          ]
+        },
+        {
+          "code": "CS2911",
+          "name": "Concepts of Incubation & Entrepreneurship",
+          "lead": "Prof.Ramesh S",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Ramesh S"
+            }
+          ]
+        },
+        {
+          "code": "CS2912",
+          "name": "Start Up Practicum 1",
+          "lead": "Prof.N Suresh",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.N Suresh"
+            }
+          ]
+        },
+        {
+          "code": "CS2110",
+          "name": "Introduction to Robotics",
+          "lead": "Dr.Thotreithem Hongray",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Thotreithem Hongray"
+            }
+          ]
+        },
+        {
+          "code": "CS2111",
+          "name": "Introduction to Industrial Automation",
+          "lead": "Prof.Harish K R",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Harish K R"
+            }
+          ]
+        },
+        {
+          "code": "CS2115",
+          "name": "Fundamentals of Computer System",
+          "lead": "Prof.Rakesh Kumar",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Rakesh Kumar"
+            }
+          ]
+        },
+        {
+          "code": "CS2116",
+          "name": "Digital Skills Basics of MS-Office",
+          "lead": "Achala Hegde",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Achala Hegde"
+            }
+          ]
+        },
+        {
+          "code": "CS2810",
+          "name": "Semiconductor Physics",
+          "lead": "Prof.A V Amruthesh Bhat",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.A V Amruthesh Bhat"
+            }
+          ]
+        },
+        {
+          "code": "CS2811",
+          "name": "Semiconductor Devices",
+          "lead": "Prof.Tuhin Kumar Maji",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Tuhin Kumar Maji"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "tab": "UE",
+      "programme": "UE",
+      "semester": "All",
+      "courses": [
+        {
+          "code": "CS2600",
+          "name": "Essentials of Office Applications",
+          "lead": "Prof. Vinayak",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof. Vinayak"
+            }
+          ]
+        },
+        {
+          "code": "CS2804",
+          "name": "Introduction to Nanotechnology",
+          "lead": "Dr.Subir",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Dr.Subir"
+            }
+          ]
+        },
+        {
+          "code": "CS2401",
+          "name": "Understanding and Mitigating Cyber Frauds",
+          "lead": "Prof. Manish Kumar",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof. Manish Kumar"
+            }
+          ]
+        },
+        {
+          "code": "CS2302",
+          "name": "Foundations of the Digital Revolution",
+          "lead": "Prof.Vijayakumar",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Vijayakumar"
+            }
+          ]
+        },
+        {
+          "code": "CS3400",
+          "name": "Software Law and Open-Source Movements",
+          "lead": "Prof.Deepak Murthy",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Deepak Murthy"
+            }
+          ]
+        },
+        {
+          "code": "CS3300",
+          "name": "Distributed Technologies",
+          "lead": null,
+          "sections": []
+        },
+        {
+          "code": "CS3200",
+          "name": "Social Data Analytics and Visualization",
+          "lead": "Prof.Balaji",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Balaji"
+            }
+          ]
+        },
+        {
+          "code": "CS3909",
+          "name": "Overview of Space Technology",
+          "lead": "Prof.Harish H",
+          "sections": [
+            {
+              "section": 1,
+              "faculty": "Prof.Harish H"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

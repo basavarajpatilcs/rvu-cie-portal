@@ -1,0 +1,124 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Any authenticated Google/Firebase user is allowed.
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Only designated coordinators/admins can initialize or resync.
+    // Keep this list synchronized with ADMIN_EMAILS in firebase-config.js.
+    function isAdmin() {
+      return isAuthenticated() &&
+             request.auth.token.email != null &&
+             request.auth.token.email in [
+               'basavarajp@rvu.edu.in',
+                'bbpatilcs@gmail.com'
+             ];
+    }
+
+    // ------------------------------------------------------------
+    // Section tracker
+    // ------------------------------------------------------------
+    match /sections/{id} {
+
+      // Any logged-in user can view the tracker.
+      allow read: if isAuthenticated();
+
+      // Only coordinators can create new tracker rows.
+      allow create: if isAdmin();
+
+      // Logged-in users can update only CIE status/audit fields.
+      allow update: if isAuthenticated() &&
+                       request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasOnly([
+                           'cie1',
+                           'cie2',
+                           'cie3',
+                           'updatedBy',
+                           'updatedAt'
+                         ]);
+
+      // No one can delete tracker records.
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------
+    // CIE-2 Question Paper + Answer Key tracker
+    // ------------------------------------------------------------
+    match /qpTracking/{id} {
+
+      // Any logged-in user can view.
+      allow read: if isAuthenticated();
+
+      // Only coordinators can create new rows.
+      allow create: if isAdmin();
+
+      // Logged-in users can update only allowed fields.
+      allow update: if isAuthenticated() &&
+                       request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasOnly([
+                           'status',
+                           'updatedBy',
+                           'updatedAt'
+                         ]);
+
+      // No deletion.
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------
+    // CIE Component monitoring (CIE-1/2/3 marks, eval methods, dates)
+    // ------------------------------------------------------------
+    match /cieComponents/{id} {
+
+      // Any logged-in user can view the component report.
+      allow read: if isAuthenticated();
+
+      // Only coordinators can create new course rows (seeding).
+      allow create: if isAdmin();
+
+      // Logged-in users can update only the CIE component blocks,
+      // remarks, and audit fields — never the pre-filled course facts
+      // (code, name, lead, credits, category, seeType, students...).
+      allow update: if isAuthenticated() &&
+                       request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasOnly([
+                           'cie1',
+                           'cie2',
+                           'cie3',
+                           'remarks',
+                           'updatedBy',
+                           'updatedAt'
+                         ]);
+
+      // No one can delete component records.
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------
+    // Faculty ↔ Login account mapping
+    // ------------------------------------------------------------
+    match /facultyLinks/{uid} {
+
+      // Any logged-in user can read.
+      allow read: if isAuthenticated();
+
+      // A user can only create/update their own faculty link.
+      allow write: if isAuthenticated() &&
+                      request.auth.uid == uid;
+    }
+
+    // ------------------------------------------------------------
+    // Deny everything else
+    // ------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

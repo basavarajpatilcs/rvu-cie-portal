@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RVU CIE Tracker — Coordinator Dashboard</title>
+<link rel="stylesheet" href="css/styles.css" />
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+</head>
+<body>
+
+<div class="loading-veil" id="loadingVeil">
+  <div class="spinner"></div>
+  <span>Loading dashboard&hellip;</span>
+</div>
+
+<header class="topbar">
+  <div class="topbar__brand">
+    <span class="mark">RV</span>
+    RVU CIE Tracker
+  </div>
+  <nav class="topbar__nav">
+    <a href="faculty.html">My Sections</a>
+    <a href="cie-components.html">CIE Components</a>
+    <a href="admin.html" class="active">Coordinator Dashboard</a>
+  </nav>
+  <div class="topbar__user" id="topbarUser"></div>
+</header>
+
+<main class="page">
+  <div class="panel" id="seedPanel" style="display:none; border-color: var(--brass);">
+    <div class="panel__head"><h2>Coordinator setup</h2></div>
+    <div class="panel__body" style="display:flex; align-items:center; gap:14px; flex-wrap:wrap;">
+      <button class="btn btn--primary" id="seedBtn" type="button">Initialise tracker with course list</button>
+      <span id="seedProgress" style="display:none; font-size:13px; color:var(--ink-soft);"></span>
+      <span style="font-size:12.5px;color:var(--ink-soft);">Safe to click any time — never overwrites a status a faculty member has already set.</span>
+    </div>
+  </div>
+
+  <div id="appRoot"></div>
+</main>
+
+<p class="footer-note">RV University · School of Computer Science &amp; Engineering · CIE Marks-Entry Tracker</p>
+
+<script type="module" src="js/admin.js"></script>
+</body>
+</html>
