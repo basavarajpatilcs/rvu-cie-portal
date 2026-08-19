@@ -102,9 +102,6 @@ async function main() {
   function renderList() {
     const { programme, search, mineOnly } = currentFilters();
 
-    const bySections = new Map(sectionDocs);
-    const byQp = new Map(qpDocs);
-
     // Group course-level rows by tab, attach live section+qp data
     const grouped = new Map();
     for (const c of courseRows) {
