@@ -134,6 +134,30 @@ service cloud.firestore {
     }
 
     // ------------------------------------------------------------
+    // Settings — submission deadlines (admin-writable, everyone can
+    // read so the portal can display "due" banners) and general
+    // portal settings.
+    // ------------------------------------------------------------
+    match /settings/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ------------------------------------------------------------
+    // Notifications — outgoing email queue. Admins queue them from
+    // the Settings page; a Cloud Function (running with the Admin
+    // SDK, which bypasses these rules) sends the mail and flips
+    // `status`. Nothing in the browser ever reads another admin's
+    // queued recipients other than admins themselves.
+    // ------------------------------------------------------------
+    match /notifications/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------
     // Faculty ↔ Login account mapping
     // ------------------------------------------------------------
     match /facultyLinks/{uid} {

@@ -21,9 +21,11 @@ import {
   getDocs,
   setDoc,
   updateDoc,
+  addDoc,
   writeBatch,
   serverTimestamp,
   query,
+  orderBy,
   limit,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { db } from "./auth.js";
@@ -287,4 +289,49 @@ export async function setCoordinator(programmeGroup, { name, email }, user) {
     { programme: programmeGroup, name: name || null, email: email || null, updatedBy: user.email, updatedAt: serverTimestamp() },
     { merge: true }
   );
+}
+
+// ============================================================
+// Deadlines & notifications — powers the Settings page's due-date
+// reminders (CIE marks entry, CIE component selection) and general
+// notification broadcasts. Emails are actually sent by a Cloud
+// Function watching the `notifications` collection (see
+// functions/index.js) — this app only ever writes documents here;
+// it never sends mail directly from the browser.
+//   settings/deadlines        { cieMarksEntryDue, cieComponentSelectionDue, updatedBy, updatedAt }
+//   notifications/{autoId}    { type, subject, message, recipients, status, createdBy, createdAt }
+// ============================================================
+
+export async function fetchDeadlines() {
+  const snap = await getDoc(doc(db, "settings", "deadlines"));
+  return snap.exists() ? snap.data() : {};
+}
+
+/** Admin-only. */
+export async function setDeadlines(patch, user) {
+  await setDoc(
+    doc(db, "settings", "deadlines"),
+    { ...patch, updatedBy: user.email, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
+}
+
+/** Admin-only. Queues an email — a Cloud Function trigger picks this doc
+ *  up, sends it, and flips `status` to "sent" (or "failed"). recipients
+ *  is an array of email addresses; type is 'reminder' | 'general'. */
+export async function queueNotification({ type, subject, message, recipients }, user) {
+  const ref = await addDoc(collection(db, "notifications"), {
+    type, subject, message, recipients,
+    status: "pending",
+    createdBy: user.email,
+    createdAt: serverTimestamp(),
+  });
+  return ref.id;
+}
+
+/** Admin-only. Most recent 50 notifications, newest first — the Settings
+ *  page's "recent activity" log. */
+export async function fetchRecentNotifications() {
+  const snap = await getDocs(query(collection(db, "notifications"), orderBy("createdAt", "desc"), limit(50)));
+  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
 }

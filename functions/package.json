@@ -1,0 +1,15 @@
+{
+  "name": "rvu-cie-portal-functions",
+  "description": "Sends queued email notifications for the RVU CIE Tracker (reminders + general notices), and runs daily deadline checks.",
+  "engines": {
+    "node": "20"
+  },
+  "main": "index.js",
+  "type": "commonjs",
+  "dependencies": {
+    "firebase-admin": "^12.1.0",
+    "firebase-functions": "^5.0.0",
+    "nodemailer": "^6.9.13"
+  },
+  "private": true
+}

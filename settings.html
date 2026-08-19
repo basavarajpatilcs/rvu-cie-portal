@@ -3,14 +3,14 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>RVU CIE Tracker — CIE Component Monitoring</title>
+<title>RVU CIE Tracker — Settings</title>
 <link rel="stylesheet" href="css/styles.css" />
 </head>
 <body>
 
 <div class="loading-veil" id="loadingVeil">
   <div class="spinner"></div>
-  <span>Loading CIE component data&hellip;</span>
+  <span>Loading settings&hellip;</span>
 </div>
 
 <header class="topbar">
@@ -18,19 +18,19 @@
     <span class="mark">RV</span>
     RVU CIE Tracker
   </div>
-    <nav class="topbar__nav">
-    <a href="cie-components.html" class="active">CIE Components</a>
+  <nav class="topbar__nav">
+    <a href="cie-components.html">CIE Components</a>
     <a href="faculty.html">My Courses</a>
     <a href="admin.html" id="adminNavLink" style="display:none;">Coordinator Dashboard</a>
-    <a href="settings.html" id="settingsNavLink" style="display:none;">Settings</a>
+    <a href="settings.html" id="settingsNavLink" class="active" style="display:none;">Settings</a>
   </nav>
   <div class="topbar__user" id="topbarUser"></div>
 </header>
 
 <main class="page" id="appRoot"></main>
 
-<p class="footer-note">RV University · School of Computer Science &amp; Engineering · CIE Component Monitoring — CIE-1 / CIE-2 / CIE-3</p>
+<p class="footer-note">RV University · School of Computer Science &amp; Engineering · Settings</p>
 
-<script type="module" src="js/cie-components.js"></script>
+<script type="module" src="js/settings.js"></script>
 </body>
 </html>

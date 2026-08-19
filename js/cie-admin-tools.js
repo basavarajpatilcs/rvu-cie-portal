@@ -2,13 +2,13 @@
 // Admin-only tools for the CIE Components page:
 //   - Course ↔ Faculty (lead) mapping, editable per row + CSV bulk upload
 //   - Faculty directory CSV upload (name ↔ email)
-//   - Programme coordinator mapping (BTech/BCA/BSc/MTech/Minors/UE)
 //   - CSV templates (per tab) + bulk marks-upload
+//   (Programme coordinator mapping lives on the Settings page.)
 // ============================================================
 
-import { PROGRAMME_GROUPS, programmeGroupForTab } from "./cie-data.js";
+import { programmeGroupForTab } from "./cie-data.js";
 import {
-  setCieCourseMapping, upsertFacultyDirectory, setCoordinator, saveCieComponent, backfillProgrammeGroups,
+  setCieCourseMapping, upsertFacultyDirectory, saveCieComponent, backfillProgrammeGroups,
 } from "./store.js";
 import { parseCsv, downloadCsv, csvEscape } from "./cie-reports.js";
 
@@ -35,17 +35,16 @@ export function renderAdminTools(root, ctx) {
     </div>
 
     <div class="panel">
-      <div class="panel__head"><h2>Programme Coordinator Mapping</h2>
+      <div class="panel__head"><h2>Programme &harr; Coordinator Permissions</h2>
         <button class="btn btn--outline btn--sm" id="backfillBtn" type="button">Repair programme tags on existing courses</button>
       </div>
       <div class="panel__body">
-        <div id="backfillStatus" style="font-size:12px;color:var(--ink-soft);margin-bottom:10px;"></div>
-        <div style="overflow-x:auto;">
-          <table class="data-table">
-            <thead><tr><th>Programme</th><th>Coordinator Name</th><th>Email</th><th></th></tr></thead>
-            <tbody id="coordTableBody"></tbody>
-          </table>
-        </div>
+        <p style="font-size:13px;color:var(--ink-soft);margin:0 0 8px;">
+          Coordinator <strong>assignment</strong> (who coordinates BTech/BCA/BSc/MTech/Minors/UE) now lives on the
+          <a href="settings.html" style="color:var(--maroon);">Settings</a> page. Use the button here only if a course
+          added or seeded before that page existed isn't respecting its coordinator's edit permissions yet.
+        </p>
+        <div id="backfillStatus" style="font-size:12px;color:var(--ink-soft);"></div>
       </div>
     </div>
 
@@ -76,7 +75,6 @@ export function renderAdminTools(root, ctx) {
   root.querySelector("#mapTemplateBtn").addEventListener("click", () => downloadCsv("cie-course-mapping-template.csv", mappingTemplateCsv(ctx.courses)));
   root.querySelector("#mapCsvInput").addEventListener("change", (e) => handleMappingCsv(e, root, ctx));
 
-  renderCoordinatorTable(root, ctx);
   root.querySelector("#backfillBtn").addEventListener("click", async (e) => {
     const btn = e.currentTarget;
     const status = root.querySelector("#backfillStatus");
@@ -196,44 +194,6 @@ async function handleMappingCsv(e, root, ctx) {
   status.textContent = `Mapping CSV processed: ${updated} updated, ${skipped} skipped (blank NewLeadName, or course not found — check Tab/Code match exactly).`;
   renderMapTable(root, ctx, root.querySelector("#mapSearch").value.trim().toLowerCase());
   e.target.value = "";
-}
-
-// ---------- Coordinator mapping ----------
-
-function renderCoordinatorTable(root, ctx) {
-  const body = root.querySelector("#coordTableBody");
-  body.innerHTML = PROGRAMME_GROUPS.map((g) => {
-    const c = ctx.coordinators[g] || {};
-    return `
-      <tr data-programme="${g}">
-        <td><strong>${g}</strong></td>
-        <td><input type="text" class="coord-name" value="${escapeAttr(c.name || "")}" style="width:180px;padding:5px 7px;border:1px solid var(--line);border-radius:4px;" /></td>
-        <td><input type="email" class="coord-email" value="${escapeAttr(c.email || "")}" placeholder="name@rvu.edu.in" style="width:200px;padding:5px 7px;border:1px solid var(--line);border-radius:4px;" /></td>
-        <td><button type="button" class="btn btn--outline btn--sm coord-save-btn">Save</button></td>
-      </tr>`;
-  }).join("");
-
-  body.querySelectorAll(".coord-save-btn").forEach((btn) => {
-    btn.addEventListener("click", async () => {
-      const tr = btn.closest("tr");
-      const g = tr.dataset.programme;
-      const name = tr.querySelector(".coord-name").value.trim();
-      const email = tr.querySelector(".coord-email").value.trim();
-      btn.disabled = true;
-      btn.textContent = "Saving\u2026";
-      try {
-        await setCoordinator(g, { name, email }, ctx.user);
-        ctx.coordinators[g] = { programme: g, name, email };
-        btn.textContent = "Saved \u2713";
-        setTimeout(() => { btn.textContent = "Save"; btn.disabled = false; }, 1000);
-      } catch (err) {
-        console.error(err);
-        alert("Could not save coordinator. Check your connection and try again.");
-        btn.disabled = false;
-        btn.textContent = "Save";
-      }
-    });
-  });
 }
 
 // ---------- CSV templates + bulk marks upload ----------

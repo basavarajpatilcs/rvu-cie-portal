@@ -1,6 +1,7 @@
-import { requireAuth, signOutUser, isAdmin } from "./auth.js";
+import { requireAuth, isAdmin } from "./auth.js";
 import { loadCourseData, flattenSections, flattenCourses, PROGRAMMES } from "./data.js";
 import { fetchAllSections, fetchAllQp, seedDatabase, isSeeded, COMPLETED } from "./store.js";
+import { renderSharedTopbar } from "./topbar.js";
 
 let chartRefs = {};
 
@@ -8,7 +9,6 @@ async function main() {
   const user = await requireAuth();
   if (!user) return;
 
-  renderTopbar(user);
   const admin = isAdmin(user.email);
   document.getElementById("seedPanel").style.display = admin ? "block" : "none";
 
@@ -25,6 +25,7 @@ async function main() {
         <h3>Dashboard not set up yet</h3>
         <p>Ask a coordinator to open this page once to initialise the tracker.</p>
       </div>`;
+    renderSharedTopbar(user, { onRefresh: () => window.location.reload() });
     return;
   }
 
@@ -34,6 +35,8 @@ async function main() {
     const [sectionDocs, qpDocs] = await Promise.all([fetchAllSections(), fetchAllQp()]);
     render(sectionRows, courseRows, sectionDocs, qpDocs);
   }
+
+  renderSharedTopbar(user, { onRefresh: refresh });
 
   if (seeded) await refresh();
   else document.getElementById("appRoot").innerHTML = `<div class="empty-state"><h3>Ready to initialise</h3><p>Use the panel above to load the course &amp; section list into the live tracker.</p></div>`;
@@ -301,18 +304,6 @@ function escapeHtml(s) {
   return String(s ?? "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 }
 
-function renderTopbar(user) {
-  document.getElementById("topbarUser").innerHTML = `
-    ${isAdmin(user.email) ? `<span class="badge-role">Coordinator</span>` : ""}
-    ${user.photoURL ? `<img src="${user.photoURL}" alt="" />` : ""}
-    <span>${escapeHtml(user.displayName || user.email)}</span>
-    <button class="btn btn--ghost btn--sm" id="signOutBtn" type="button">Sign out</button>
-  `;
-  document.getElementById("topbarUser").querySelector("#signOutBtn").addEventListener("click", async () => {
-    await signOutUser();
-    window.location.href = "index.html";
-  });
-}
 
 function appHtml() {
   return `

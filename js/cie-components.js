@@ -1,4 +1,4 @@
-import { requireAuth, signOutUser, isAdmin } from "./auth.js";
+import { requireAuth, isAdmin } from "./auth.js";
 import { loadCieCourseData, flattenCieCourses, computeCie, CIE_TABS, programmeGroupForTab } from "./cie-data.js";
 import {
   fetchAllCie, saveCieComponent, seedCieComponents, getFacultyLink,
@@ -6,6 +6,7 @@ import {
 } from "./store.js";
 import { buildReport, buildComponentAnalysis, reportRowsToCsv, downloadCsv } from "./cie-reports.js";
 import { renderAdminTools } from "./cie-admin-tools.js";
+import { renderSharedTopbar } from "./topbar.js";
 
 const CAPS = { cie1: 20, cie2: 25, cie3: 25, total: 70 };
 const EVAL_METHODS_FALLBACK = ["Others (please specify)"];
@@ -16,13 +17,16 @@ async function main() {
 
   const admin = isAdmin(user.email);
 
-  const [cieCourseData, cieDocs, link, facultyDirectory, coordinators] = await Promise.all([
+  const [cieCourseData, cieDocsRaw, link, facultyDirectoryRaw, coordinatorsRaw] = await Promise.all([
     loadCieCourseData(),
     fetchAllCie(),
     getFacultyLink(user.uid),
     fetchFacultyDirectory(),
     fetchCoordinators(),
   ]);
+  const cieDocs = { ...cieDocsRaw };
+  const facultyDirectory = { ...facultyDirectoryRaw };
+  const coordinators = { ...coordinatorsRaw };
 
   const courses = flattenCieCourses(cieCourseData);
   const evalMethods = cieCourseData.evaluationMethods || EVAL_METHODS_FALLBACK;
@@ -34,7 +38,12 @@ async function main() {
     .filter(([, c]) => c && c.email && c.email.toLowerCase() === user.email.toLowerCase())
     .map(([g]) => g);
 
-  renderTopbar(user, admin, myCoordProgrammes);
+  renderSharedTopbar(user, {
+    roleBadge: admin
+      ? `<span class="badge-role">Coordinator (Admin)</span>`
+      : myCoordProgrammes.length ? `<span class="badge-role">${escapeHtml(myCoordProgrammes.join(", "))} Coordinator</span>` : "",
+    onRefresh: refreshData,
+  });
 
   document.getElementById("loadingVeil").remove();
   document.getElementById("appRoot").innerHTML = appShellHtml(myName, admin, missingCount, courses.length, seededCount);
@@ -352,9 +361,29 @@ async function main() {
     }
   }
 
+  async function refreshData() {
+    const [freshCie, freshFacDir, freshCoord] = await Promise.all([
+      fetchAllCie(), fetchFacultyDirectory(), fetchCoordinators(),
+    ]);
+    replaceContents(cieDocs, freshCie);
+    replaceContents(facultyDirectory, freshFacDir);
+    replaceContents(coordinators, freshCoord);
+    renderDashboard();
+    renderList();
+    if (document.getElementById("panel-report").style.display !== "none") {
+      generateReport();
+      generateComponentAnalysis();
+    }
+  }
+
   wireFilterBar(renderList);
   renderDashboard();
   renderList();
+}
+
+function replaceContents(target, fresh) {
+  for (const k of Object.keys(target)) delete target[k];
+  Object.assign(target, fresh);
 }
 
 function wireFilterBar(renderList) {
@@ -485,26 +514,6 @@ function cieCardHtml(item, editable, evalMethods) {
     </div>`;
 }
 
-function renderTopbar(user, admin, coordProgrammes) {
-  const roleBadge = admin
-    ? `<span class="badge-role">Coordinator (Admin)</span>`
-    : coordProgrammes.length
-      ? `<span class="badge-role">${escapeHtml(coordProgrammes.join(", "))} Coordinator</span>`
-      : "";
-  document.getElementById("topbarUser").innerHTML = `
-    ${roleBadge}
-    ${user.photoURL ? `<img src="${user.photoURL}" alt="" />` : ""}
-    <span>${escapeHtml(user.displayName || user.email)}</span>
-    <button class="btn btn--ghost btn--sm" id="signOutBtn" type="button">Sign out</button>
-  `;
-  document.getElementById("topbarUser").querySelector("#signOutBtn").addEventListener("click", async () => {
-    await signOutUser();
-    window.location.href = "index.html";
-  });
-  if (admin) {
-    document.getElementById("adminNavLink").style.display = "inline-block";
-  }
-}
 
 function appShellHtml(myName, admin, missingCount, totalCourses, seededCount) {
   return `
