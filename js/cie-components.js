@@ -1,6 +1,11 @@
 import { requireAuth, signOutUser, isAdmin } from "./auth.js";
-import { loadCieCourseData, flattenCieCourses, computeCie, CIE_TABS } from "./cie-data.js";
-import { fetchAllCie, saveCieComponent, isCieSeeded, seedCieComponents, getFacultyLink } from "./store.js";
+import { loadCieCourseData, flattenCieCourses, computeCie, CIE_TABS, programmeGroupForTab } from "./cie-data.js";
+import {
+  fetchAllCie, saveCieComponent, seedCieComponents, getFacultyLink,
+  fetchFacultyDirectory, fetchCoordinators,
+} from "./store.js";
+import { buildReport, buildComponentAnalysis, reportRowsToCsv, downloadCsv } from "./cie-reports.js";
+import { renderAdminTools } from "./cie-admin-tools.js";
 
 const CAPS = { cie1: 20, cie2: 25, cie3: 25, total: 70 };
 const EVAL_METHODS_FALLBACK = ["Others (please specify)"];
@@ -9,25 +14,34 @@ async function main() {
   const user = await requireAuth();
   if (!user) return;
 
-  renderTopbar(user);
+  const admin = isAdmin(user.email);
 
-  const [cieCourseData, cieDocs, link] = await Promise.all([
+  const [cieCourseData, cieDocs, link, facultyDirectory, coordinators] = await Promise.all([
     loadCieCourseData(),
     fetchAllCie(),
     getFacultyLink(user.uid),
+    fetchFacultyDirectory(),
+    fetchCoordinators(),
   ]);
 
   const courses = flattenCieCourses(cieCourseData);
   const evalMethods = cieCourseData.evaluationMethods || EVAL_METHODS_FALLBACK;
   const myName = link ? link.name : null;
-  const admin = isAdmin(user.email);
-  const seeded = courses.length ? Object.keys(cieDocs).length > 0 : true;
+  const seededCount = Object.keys(cieDocs).length;
+  const missingCount = courses.filter((c) => !cieDocs[c.id]).length;
+
+  const myCoordProgrammes = Object.entries(coordinators)
+    .filter(([, c]) => c && c.email && c.email.toLowerCase() === user.email.toLowerCase())
+    .map(([g]) => g);
+
+  renderTopbar(user, admin, myCoordProgrammes);
 
   document.getElementById("loadingVeil").remove();
-  document.getElementById("appRoot").innerHTML = appShellHtml(myName, admin, seeded, courses.length);
-  wireFilterBar();
+  document.getElementById("appRoot").innerHTML = appShellHtml(myName, admin, missingCount, courses.length, seededCount);
+  wireReportControls();
+  wireTabs(admin);
 
-  if (admin && !seeded) {
+  if (admin && missingCount > 0) {
     document.getElementById("seedCieBtn").addEventListener("click", async (e) => {
       const btn = e.currentTarget;
       btn.disabled = true;
@@ -36,20 +50,16 @@ async function main() {
         const n = await seedCieComponents(cieCourseData, (done, total) => {
           btn.textContent = `Seeding\u2026 ${done}/${total}`;
         });
-        alert(`Seeded ${n} CIE component rows. Reloading\u2026`);
+        alert(`Seeded ${n} CIE component row(s) (including any newly-added courses, e.g. MTech). Reloading\u2026`);
         window.location.reload();
       } catch (err) {
         console.error(err);
         alert("Seeding failed. Check console for details.");
         btn.disabled = false;
-        btn.textContent = "Seed CIE Component data";
+        btn.textContent = "Seed / resync CIE Component data";
       }
     });
   }
-
-  window.__cieRenderList = renderList;
-  renderDashboard();
-  renderList();
 
   function docFor(course) {
     return cieDocs[course.id] || null;
@@ -57,17 +67,11 @@ async function main() {
 
   function canEdit(course) {
     if (admin) return true;
+    if (myCoordProgrammes.includes(programmeGroupForTab(course.tab))) return true;
     if (!myName) return false;
-    return !!course.lead && course.lead === myName;
-  }
-
-  function currentFilters() {
-    return {
-      tab: document.getElementById("filterTab").value,
-      search: document.getElementById("filterSearch").value.trim().toLowerCase(),
-      mineOnly: myName ? document.getElementById("filterMine").checked : false,
-      errorsOnly: document.getElementById("filterErrors").checked,
-    };
+    const doc = docFor(course);
+    const lead = (doc && doc.lead) ?? course.lead;
+    return !!lead && lead === myName;
   }
 
   function renderDashboard() {
@@ -77,7 +81,8 @@ async function main() {
       const doc = docFor(c);
       const calc = computeCie(doc || emptyStub(c), CAPS);
       if (calc.status === "Completed") completed++;
-      if (!c.lead) missingLead++;
+      const lead = (doc && doc.lead) ?? c.lead;
+      if (!lead) missingLead++;
       if (calc.hasError) errors++;
       if (doc) { sumTotal += calc.totalCie; if (calc.totalCie > 0) withMarks++; }
     }
@@ -93,18 +98,182 @@ async function main() {
       </div>`;
   }
 
+  // ---------- Consolidated report (one-click, filterable) ----------
+
+  function reportFilters() {
+    return {
+      tab: document.getElementById("repTab").value,
+      category: document.getElementById("repCategory").value,
+      status: document.getElementById("repStatus").value,
+      search: document.getElementById("repSearch").value.trim(),
+    };
+  }
+
+  function generateReport() {
+    const report = buildReport(courses, cieDocs, CAPS, reportFilters());
+    window.__lastReport = report;
+    const out = document.getElementById("reportOutput");
+
+    out.innerHTML = `
+      <div class="kpi-row">
+        <div class="kpi"><div class="label">Courses (filtered)</div><div class="value">${report.totals.courses}</div></div>
+        <div class="kpi"><div class="label">Students</div><div class="value">${report.totals.students}</div></div>
+        <div class="kpi"><div class="label">Completed</div><div class="value">${report.totals.completed}</div></div>
+        <div class="kpi"><div class="label">Missing Lead</div><div class="value">${report.totals.missingLead}</div></div>
+        <div class="kpi"><div class="label">Errors</div><div class="value">${report.totals.errors}</div></div>
+      </div>
+
+      <div class="chart-grid">
+        <div class="panel" style="margin-bottom:0;">
+          <div class="panel__head"><h2>Summary by Tab</h2></div>
+          <div class="panel__body" style="overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr><th>Tab</th><th>Courses</th><th>Students</th><th>Avg Total</th><th>Completed</th><th>Missing Lead</th><th>Errors</th></tr></thead>
+              <tbody>
+                ${report.tabSummary.map((t) => `
+                  <tr><td>${escapeHtml(t.tab)}</td><td>${t.courses}</td><td>${t.students}</td><td>${t.avgTotal}</td><td>${t.completed}</td><td>${t.missingLead}</td><td>${t.errors}</td></tr>
+                `).join("") || `<tr><td colspan="7" style="color:var(--ink-soft);">No matching rows.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        <div class="panel" style="margin-bottom:0;">
+          <div class="panel__head"><h2>Courses by Category</h2></div>
+          <div class="panel__body" style="overflow-x:auto;">
+            <table class="data-table">
+              <thead><tr><th>Category</th><th>Count</th></tr></thead>
+              <tbody>
+                ${report.categorySummary.map((c) => `<tr><td>${escapeHtml(c.category)}</td><td>${c.count}</td></tr>`).join("") || `<tr><td colspan="2" style="color:var(--ink-soft);">No matching rows.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head"><h2>Courses by Status</h2></div>
+        <div class="panel__body" style="overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr><th>Status</th><th>Count</th></tr></thead>
+            <tbody>${report.statusSummary.map((s) => `<tr><td>${escapeHtml(s.status)}</td><td>${s.count}</td></tr>`).join("")}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel__head"><h2>Course-level Detail (${report.rows.length})</h2></div>
+        <div class="panel__body" style="overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr><th>Tab</th><th>Code</th><th>Course</th><th>Lead</th><th>CIE-1</th><th>CIE-2</th><th>CIE-3</th><th>Total</th><th>Comp. Check</th><th>Status</th></tr></thead>
+            <tbody>
+              ${report.rows.slice(0, 500).map((r) => `
+                <tr>
+                  <td>${escapeHtml(r.course.tab)}</td>
+                  <td class="mono">${escapeHtml(r.course.code)}</td>
+                  <td>${escapeHtml(r.course.name)}</td>
+                  <td>${escapeHtml(r.course.lead || "\u2014")}</td>
+                  <td>${r.calc.cie1Total}${r.calc.cie1Over ? " \u26A0" : ""}</td>
+                  <td>${r.calc.cie2Marks}${r.calc.cie2Over ? " \u26A0" : ""}</td>
+                  <td>${r.calc.cie3Total}${r.calc.cie3Over ? " \u26A0" : ""}</td>
+                  <td>${r.calc.totalCie}${r.calc.totalOver ? " \u26A0" : ""}</td>
+                  <td>${r.calc.componentCheck ? "OK" : `Need ${r.calc.minReq}`}</td>
+                  <td>${r.calc.status}</td>
+                </tr>`).join("")}
+            </tbody>
+          </table>
+          ${report.rows.length > 500 ? `<p style="font-size:12px;color:var(--ink-soft);">Showing first 500 of ${report.rows.length} rows &mdash; use Export CSV for the full list.</p>` : ""}
+        </div>
+      </div>
+    `;
+  }
+
+  function generateComponentAnalysis() {
+    const a = buildComponentAnalysis(courses, cieDocs, evalMethods, programmeGroupForTab);
+    const out = document.getElementById("componentAnalysisOutput");
+    out.innerHTML = `
+      <div class="panel">
+        <div class="panel__head"><h2>Evaluation-Method Usage (CIE-1 + CIE-3 combined)</h2>
+          <span style="font-size:12px;color:var(--ink-soft);">Reads 0 for a method until courses actually use it in their CIE-1/CIE-3 entries.</span>
+        </div>
+        <div class="panel__body" style="overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr><th>Component Type</th><th>CIE-1 Uses</th><th>CIE-3 Uses</th><th>Total</th></tr></thead>
+            <tbody>
+              ${a.overall.filter((r) => r.total > 0).sort((x, y) => y.total - x.total).map((r) => `<tr><td>${escapeHtml(r.method)}</td><td>${r.cie1}</td><td>${r.cie3}</td><td><strong>${r.total}</strong></td></tr>`).join("") || `<tr><td colspan="4" style="color:var(--ink-soft);">No CIE-1/CIE-3 evaluation methods entered yet.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel__head"><h2>Usage by Programme Group</h2></div>
+        <div class="panel__body" style="overflow-x:auto;">
+          <table class="data-table">
+            <thead><tr><th>Component Type</th>${a.groups.map((g) => `<th>${g}</th>`).join("")}</tr></thead>
+            <tbody>
+              ${a.byGroup.filter((r) => a.groups.some((g) => r[g] > 0)).map((r) => `<tr><td>${escapeHtml(r.method)}</td>${a.groups.map((g) => `<td>${r[g]}</td>`).join("")}</tr>`).join("") || `<tr><td colspan="${a.groups.length + 1}" style="color:var(--ink-soft);">No CIE-1/CIE-3 evaluation methods entered yet.</td></tr>`}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    `;
+  }
+
+  function wireReportControls() {
+    document.getElementById("repGenerateBtn").addEventListener("click", () => {
+      generateReport();
+      generateComponentAnalysis();
+    });
+    document.getElementById("repExportBtn").addEventListener("click", () => {
+      const report = window.__lastReport || buildReport(courses, cieDocs, CAPS, reportFilters());
+      downloadCsv(`cie-consolidated-report-${Date.now()}.csv`, reportRowsToCsv(report.rows));
+    });
+  }
+
+  // ---------- Tabs: Entry / Report / Admin Tools ----------
+
+  function wireTabs(isAdminUser) {
+    const tabs = document.querySelectorAll(".cie-page-tab");
+    tabs.forEach((t) => {
+      t.addEventListener("click", () => {
+        tabs.forEach((x) => x.classList.remove("active"));
+        t.classList.add("active");
+        document.querySelectorAll(".cie-page-panel").forEach((p) => (p.style.display = "none"));
+        document.getElementById(`panel-${t.dataset.panel}`).style.display = "block";
+        if (t.dataset.panel === "admin" && isAdminUser && !document.getElementById("adminToolsRoot").dataset.rendered) {
+          renderAdminTools(document.getElementById("adminToolsRoot"), {
+            courses, cieDocs, facultyDirectory, coordinators, user,
+            onDataChanged: () => { renderDashboard(); renderList(); },
+          });
+          document.getElementById("adminToolsRoot").dataset.rendered = "1";
+        }
+      });
+    });
+  }
+
+  // ---------- Course entry list ----------
+
+  function currentFilters() {
+    return {
+      tab: document.getElementById("filterTab").value,
+      search: document.getElementById("filterSearch").value.trim().toLowerCase(),
+      mineOnly: myName ? document.getElementById("filterMine").checked : false,
+      errorsOnly: document.getElementById("filterErrors").checked,
+    };
+  }
+
   function renderList() {
     const { tab, search, mineOnly, errorsOnly } = currentFilters();
     const grouped = new Map();
 
     for (const c of courses) {
       if (tab !== "All" && c.tab !== tab) continue;
-      if (mineOnly && !(c.lead && c.lead === myName)) continue;
+      const doc = docFor(c);
+      const lead = (doc && doc.lead) ?? c.lead;
+      if (mineOnly && !(lead && lead === myName)) continue;
       if (search) {
-        const hay = `${c.code} ${c.name} ${c.lead || ""}`.toLowerCase();
+        const hay = `${c.code} ${c.name} ${lead || ""}`.toLowerCase();
         if (!hay.includes(search)) continue;
       }
-      const doc = docFor(c);
       const calc = computeCie(doc || emptyStub(c), CAPS);
       if (errorsOnly && !calc.hasError) continue;
 
@@ -134,8 +303,6 @@ async function main() {
   }
 
   function recalcCard(card) {
-    const id = card.dataset.id;
-    const course = courses.find((c) => c.id === id);
     const draft = readDraft(card);
     const calc = computeCie(draft, CAPS);
     card.querySelector(".cie-live-summary").outerHTML = summaryHtml(calc);
@@ -179,15 +346,24 @@ async function main() {
       setTimeout(() => { btn.textContent = "Save changes"; btn.disabled = false; }, 1200);
     } catch (err) {
       console.error(err);
-      alert(
-        cieDocs[id]
-          ? "Could not save. Check your connection and try again."
-          : "This course hasn't been seeded into CIE Component monitoring yet — ask your coordinator to seed it from the Coordinator Dashboard."
-      );
+      alert("Could not save. Check your connection, or ask a coordinator to resync CIE Component data if this course was added recently, then try again.");
       btn.disabled = false;
       btn.textContent = "Save changes";
     }
   }
+
+  wireFilterBar(renderList);
+  renderDashboard();
+  renderList();
+}
+
+function wireFilterBar(renderList) {
+  ["filterTab", "filterSearch", "filterMine", "filterErrors"].forEach((id) => {
+    const el = document.getElementById(id);
+    if (!el) return;
+    el.addEventListener("input", renderList);
+    el.addEventListener("change", renderList);
+  });
 }
 
 function emptyStub(course) {
@@ -247,15 +423,16 @@ function cieCardHtml(item, editable, evalMethods) {
   const { course, doc } = item;
   const d = doc || emptyStub(course);
   const calc = item.calc;
+  const effectiveLead = d.lead ?? course.lead;
 
   return `
-    <div class="cie-card" data-id="${course.id}" data-credits="${course.credits}" data-lead="${escapeAttr(course.lead || "")}">
+    <div class="cie-card" data-id="${course.id}" data-credits="${course.credits}" data-lead="${escapeAttr(effectiveLead || "")}">
       <div class="cie-card__head">
         <div>
           <div class="course-card__code">${escapeHtml(course.code)}</div>
           <div class="course-card__title">${escapeHtml(course.name)}</div>
           <div class="cie-card__meta">
-            <span>Lead: <strong>${course.lead ? escapeHtml(course.lead) : "\u26A0 not on record"}</strong></span>
+            <span>Lead: <strong>${effectiveLead ? escapeHtml(effectiveLead) : "\u26A0 not on record"}</strong></span>
             <span>Credits: ${course.credits}</span>
             <span>${escapeHtml(course.category || "\u2014")}</span>
             <span>${escapeHtml(course.seeType || "\u2014")}</span>
@@ -296,34 +473,26 @@ function cieCardHtml(item, editable, evalMethods) {
           <textarea name="remarks" ${editable ? "" : "disabled"} placeholder="${editable ? "Optional notes\u2026" : ""}">${escapeHtml(d.remarks || "")}</textarea>
         </div>
 
+        ${!doc ? `<div class="cie-readonly-note" style="color:var(--amber);">Not yet seeded into CIE Component monitoring &mdash; ask a coordinator to resync from the Admin Tools tab.</div>` : ""}
         ${editable
           ? `<div class="cie-save-row">
                <button type="button" class="btn btn--primary btn--sm cie-save-btn">Save changes</button>
-               <span class="cie-save-note">Only you (course lead) or a coordinator can edit this course.</span>
+               <span class="cie-save-note">Only the course lead, that programme's coordinator, or an admin can edit this course.</span>
              </div>`
-          : `<div class="cie-readonly-note">Read-only &mdash; only ${course.lead ? escapeHtml(course.lead) : "the course lead"} or a coordinator can edit CIE component data for this course.</div>`
+          : `<div class="cie-readonly-note">Read-only &mdash; only ${effectiveLead ? escapeHtml(effectiveLead) : "the course lead"}, that programme's coordinator, or an admin can edit CIE component data for this course.</div>`
         }
       </div>
     </div>`;
 }
 
-function wireFilterBar() {
-  const els = [
-    document.getElementById("filterTab"),
-    document.getElementById("filterSearch"),
-    document.getElementById("filterMine"),
-    document.getElementById("filterErrors"),
-  ];
-  els.forEach((el) => {
-    if (!el) return;
-    el.addEventListener("input", () => window.__cieRenderList && window.__cieRenderList());
-    el.addEventListener("change", () => window.__cieRenderList && window.__cieRenderList());
-  });
-}
-
-function renderTopbar(user) {
+function renderTopbar(user, admin, coordProgrammes) {
+  const roleBadge = admin
+    ? `<span class="badge-role">Coordinator (Admin)</span>`
+    : coordProgrammes.length
+      ? `<span class="badge-role">${escapeHtml(coordProgrammes.join(", "))} Coordinator</span>`
+      : "";
   document.getElementById("topbarUser").innerHTML = `
-    ${isAdmin(user.email) ? `<span class="badge-role">Coordinator</span>` : ""}
+    ${roleBadge}
     ${user.photoURL ? `<img src="${user.photoURL}" alt="" />` : ""}
     <span>${escapeHtml(user.displayName || user.email)}</span>
     <button class="btn btn--ghost btn--sm" id="signOutBtn" type="button">Sign out</button>
@@ -332,12 +501,12 @@ function renderTopbar(user) {
     await signOutUser();
     window.location.href = "index.html";
   });
-  if (isAdmin(user.email)) {
+  if (admin) {
     document.getElementById("adminNavLink").style.display = "inline-block";
   }
 }
 
-function appShellHtml(myName, admin, seeded, totalCourses) {
+function appShellHtml(myName, admin, missingCount, totalCourses, seededCount) {
   return `
     <div class="page-head">
       <div>
@@ -347,32 +516,63 @@ function appShellHtml(myName, admin, seeded, totalCourses) {
       </div>
     </div>
 
-    ${admin && !seeded && totalCourses > 0 ? `
+    ${admin && missingCount > 0 ? `
       <div class="panel" style="border-color:var(--brass);">
         <div class="panel__body" style="display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;">
-          <span>CIE Component monitoring hasn't been seeded into Firestore yet (${totalCourses} courses found in the course list).</span>
-          <button class="btn btn--primary btn--sm" id="seedCieBtn" type="button">Seed CIE Component data</button>
+          <span>${seededCount === 0 ? "CIE Component monitoring hasn't been seeded yet" : `${missingCount} course(s) (e.g. newly-added MTech courses) aren't in Firestore yet`} &mdash; ${totalCourses} total in the course list.</span>
+          <button class="btn btn--primary btn--sm" id="seedCieBtn" type="button">${seededCount === 0 ? "Seed CIE Component data" : "Seed / resync CIE Component data"}</button>
         </div>
       </div>` : ""}
 
-    <div id="cieDashboard"></div>
-
-    <div class="filter-bar">
-      <select id="filterTab">
-        <option>All</option>
-        ${CIE_TABS.map((t) => `<option>${escapeHtml(t)}</option>`).join("")}
-      </select>
-      <input type="search" id="filterSearch" placeholder="Search course, code, or lead" />
-      <label class="toggle-chip" style="${myName ? "" : "display:none;"}">
-        <input type="checkbox" id="filterMine" />
-        My courses only
-      </label>
-      <label class="toggle-chip">
-        <input type="checkbox" id="filterErrors" />
-        Errors / over-cap only
-      </label>
+    <div class="topbar__nav" style="background:transparent;padding:0;margin-bottom:16px;display:flex;gap:6px;">
+      <button type="button" class="cie-page-tab btn btn--outline btn--sm active" data-panel="entry" style="border-color:var(--maroon);">Marks Entry</button>
+      <button type="button" class="cie-page-tab btn btn--outline btn--sm" data-panel="report">Consolidated Report</button>
+      ${admin ? `<button type="button" class="cie-page-tab btn btn--outline btn--sm" data-panel="admin">Admin Tools</button>` : ""}
     </div>
-    <div id="cieList"></div>
+
+    <div id="panel-entry" class="cie-page-panel">
+      <div id="cieDashboard"></div>
+      <div class="filter-bar">
+        <select id="filterTab">
+          <option>All</option>
+          ${CIE_TABS.map((t) => `<option>${escapeHtml(t)}</option>`).join("")}
+        </select>
+        <input type="search" id="filterSearch" placeholder="Search course, code, or lead" />
+        <label class="toggle-chip" style="${myName ? "" : "display:none;"}">
+          <input type="checkbox" id="filterMine" />
+          My courses only
+        </label>
+        <label class="toggle-chip">
+          <input type="checkbox" id="filterErrors" />
+          Errors / over-cap only
+        </label>
+      </div>
+      <div id="cieList"></div>
+    </div>
+
+    <div id="panel-report" class="cie-page-panel" style="display:none;">
+      <div class="filter-bar">
+        <select id="repTab">
+          <option value="All">All tabs</option>
+          ${CIE_TABS.map((t) => `<option>${escapeHtml(t)}</option>`).join("")}
+        </select>
+        <select id="repCategory">
+          <option value="All">All categories</option>
+          <option>Core</option><option>Major</option><option>Elective</option><option>Minor</option>
+        </select>
+        <select id="repStatus">
+          <option value="All">All statuses</option>
+          <option>Not Started</option><option>In Progress</option><option>Completed</option>
+        </select>
+        <input type="search" id="repSearch" placeholder="Search course, code, or lead" />
+        <button class="btn btn--primary btn--sm" id="repGenerateBtn" type="button">Generate Report</button>
+        <button class="btn btn--outline btn--sm" id="repExportBtn" type="button">Export CSV</button>
+      </div>
+      <div id="reportOutput"><div class="empty-state"><h3>No report generated yet</h3><p>Set your filters (optional) and click Generate Report.</p></div></div>
+      <div id="componentAnalysisOutput"></div>
+    </div>
+
+    ${admin ? `<div id="panel-admin" class="cie-page-panel" style="display:none;"><div id="adminToolsRoot"></div></div>` : ""}
   `;
 }
 
@@ -383,6 +583,4 @@ function escapeAttr(s) {
   return escapeHtml(s);
 }
 
-main().then(() => {
-  // Expose renderList to the filter-bar listeners wired before it existed.
-});
+main();

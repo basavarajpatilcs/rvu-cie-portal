@@ -873,6 +873,8 @@ table.data-table {
   margin-top: 10px;
 }
 
+.cie-page-tab.active { background: var(--maroon-tint); color: var(--maroon-deep); font-weight: 600; }
+
 .loading-veil {
   position: fixed; inset: 0;
   background: var(--paper);

@@ -150,19 +150,58 @@ export async function fetchAllCie() {
   return out;
 }
 
-/** Faculty/admin save: only the editable component blocks + remarks + audit fields. */
+/** Faculty/admin save: the editable component blocks + remarks + audit fields.
+ *  Uses set(merge) rather than update so it also works the moment a
+ *  coordinator has resynced the course in (no separate "does it exist"
+ *  round-trip needed on the caller's side). */
 export async function saveCieComponent(id, patch, user) {
   const ref = doc(db, "cieComponents", id);
-  await updateDoc(ref, {
-    ...patch,
-    updatedBy: user.email,
-    updatedAt: serverTimestamp(),
-  });
+  await setDoc(
+    ref,
+    { ...patch, updatedBy: user.email, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
+}
+
+/** Admin-only: reassign course lead / faculty email mapping for one course.
+ *  Kept separate from saveCieComponent because rules gate it to admins only. */
+export async function setCieCourseMapping(id, { lead, leadEmail }, user) {
+  const ref = doc(db, "cieComponents", id);
+  await setDoc(
+    ref,
+    { lead: lead || null, leadEmail: leadEmail || null, updatedBy: user.email, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
 }
 
 export async function isCieSeeded() {
   const snap = await getDocs(query(collection(db, "cieComponents"), limit(1)));
   return !snap.empty;
+}
+
+/** Admin-only migration: adds/corrects the `programmeGroup` field on every
+ *  existing cieComponents doc (needed for programme-coordinator permissions).
+ *  Safe to re-run — only touches that one field, never marks/dates. */
+export async function backfillProgrammeGroups(user) {
+  const { programmeGroupForTab } = await import("./cie-data.js");
+  const existing = await fetchAllCie();
+  const entries = Object.entries(existing).filter(
+    ([, d]) => d.tab && d.programmeGroup !== programmeGroupForTab(d.tab)
+  );
+  let written = 0;
+  const CHUNK = 400;
+  for (let i = 0; i < entries.length; i += CHUNK) {
+    const chunk = entries.slice(i, i + CHUNK);
+    const batch = writeBatch(db);
+    for (const [id, d] of chunk) {
+      batch.set(doc(db, "cieComponents", id),
+        { programmeGroup: programmeGroupForTab(d.tab), updatedBy: user.email, updatedAt: serverTimestamp() },
+        { merge: true });
+    }
+    await batch.commit();
+    written += chunk.length;
+  }
+  return written;
 }
 
 /** One-time write of every course row from data/cie-components.json.
@@ -184,4 +223,68 @@ export async function seedCieComponents(cieCourseData, onProgress) {
     if (onProgress) onProgress(written, all.length);
   }
   return written;
+}
+
+// ============================================================
+// Faculty directory — name ↔ email, used for the admin course
+// mapping tool (dropdown of real emails instead of free text)
+// and for CSV bulk-mapping uploads.
+//   facultyDirectory/{slug(name)}  { name, email, updatedBy, updatedAt }
+// ============================================================
+
+function slugName(s) {
+  return String(s).toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
+export async function fetchFacultyDirectory() {
+  const snap = await getDocs(collection(db, "facultyDirectory"));
+  const out = {};
+  snap.forEach((d) => (out[d.id] = d.data()));
+  return out;
+}
+
+/** Admin-only. entries: [{name, email}]. Upserts — last write for a given
+ *  name wins, so re-uploading a corrected CSV is safe. */
+export async function upsertFacultyDirectory(entries, user) {
+  const CHUNK = 400;
+  let written = 0;
+  for (let i = 0; i < entries.length; i += CHUNK) {
+    const chunk = entries.slice(i, i + CHUNK);
+    const batch = writeBatch(db);
+    for (const e of chunk) {
+      if (!e.name) continue;
+      batch.set(
+        doc(db, "facultyDirectory", slugName(e.name)),
+        { name: e.name, email: e.email || null, updatedBy: user.email, updatedAt: serverTimestamp() },
+        { merge: true }
+      );
+    }
+    await batch.commit();
+    written += chunk.length;
+  }
+  return written;
+}
+
+// ============================================================
+// Programme coordinators — one designated coordinator (name +
+// email) per broad programme group (BTech, BCA, BSc, MTech,
+// Minors, UE). Coordinators get edit rights across every course
+// in their programme, not just courses where they're the lead.
+//   coordinators/{programmeGroup}  { programme, name, email, updatedBy, updatedAt }
+// ============================================================
+
+export async function fetchCoordinators() {
+  const snap = await getDocs(collection(db, "coordinators"));
+  const out = {};
+  snap.forEach((d) => (out[d.id] = d.data()));
+  return out;
+}
+
+/** Admin-only. */
+export async function setCoordinator(programmeGroup, { name, email }, user) {
+  await setDoc(
+    doc(db, "coordinators", programmeGroup),
+    { programme: programmeGroup, name: name || null, email: email || null, updatedBy: user.email, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
 }

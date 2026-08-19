@@ -19,6 +19,17 @@ service cloud.firestore {
              ];
     }
 
+    // A programme coordinator (set via the admin "Coordinator Mapping" tool,
+    // stored at coordinators/{programmeGroup}) can edit any course whose
+    // programmeGroup matches the programme they coordinate — not just
+    // courses where they're personally listed as course lead.
+    function isProgrammeCoordinator(programmeGroup) {
+      return isAuthenticated() &&
+             programmeGroup != null &&
+             exists(/databases/$(database)/documents/coordinators/$(programmeGroup)) &&
+             get(/databases/$(database)/documents/coordinators/$(programmeGroup)).data.email == request.auth.token.email;
+    }
+
     // ------------------------------------------------------------
     // Section tracker
     // ------------------------------------------------------------
@@ -79,26 +90,47 @@ service cloud.firestore {
       // Any logged-in user can view the component report.
       allow read: if isAuthenticated();
 
-      // Only coordinators can create new course rows (seeding).
+      // Only coordinators can create new course rows (seeding, CSV import).
       allow create: if isAdmin();
 
-      // Logged-in users can update only the CIE component blocks,
-      // remarks, and audit fields — never the pre-filled course facts
-      // (code, name, lead, credits, category, seeType, students...).
-      allow update: if isAuthenticated() &&
-                       request.resource.data.diff(resource.data)
-                         .affectedKeys()
-                         .hasOnly([
-                           'cie1',
-                           'cie2',
-                           'cie3',
-                           'remarks',
-                           'updatedBy',
-                           'updatedAt'
-                         ]);
+      // Admins can update any field (course-lead/faculty-email reassignment,
+      // category corrections, etc. — the "edit and map course by faculty" tool).
+      // Everyone else (course leads, or a programme coordinator acting on
+      // their own programme's courses) can update only the CIE component
+      // blocks, remarks, and audit fields — never the pre-filled course facts.
+      allow update: if isAdmin() ||
+                       isProgrammeCoordinator(resource.data.programmeGroup) ||
+                       (isAuthenticated() &&
+                        request.resource.data.diff(resource.data)
+                          .affectedKeys()
+                          .hasOnly([
+                            'cie1',
+                            'cie2',
+                            'cie3',
+                            'remarks',
+                            'updatedBy',
+                            'updatedAt'
+                          ]));
 
       // No one can delete component records.
       allow delete: if false;
+    }
+
+    // ------------------------------------------------------------
+    // Faculty directory — name ↔ email lookup used by the admin
+    // course-mapping tool and CSV bulk-mapping uploads.
+    // ------------------------------------------------------------
+    match /facultyDirectory/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ------------------------------------------------------------
+    // Programme coordinators — one per broad programme group.
+    // ------------------------------------------------------------
+    match /coordinators/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
     }
 
     // ------------------------------------------------------------

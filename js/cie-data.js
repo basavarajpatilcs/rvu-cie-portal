@@ -60,7 +60,8 @@ export function flattenCieCourses(data) {
 
 export const CIE_TABS = [
   "BTech Sem 1", "BTech Sem 3", "BTech Sem 5", "BTech Sem 7",
-  "BCA", "BSc", "Minors-2023", "Minors-2024", "Minors-2025", "UE",
+  "BCA", "BSc", "MTech",
+  "Minors-2023", "Minors-2024", "Minors-2025", "UE",
 ];
 
 /** Default empty component document — matches the shape store.js writes on seed
@@ -68,7 +69,9 @@ export const CIE_TABS = [
 export function emptyCieDoc(course) {
   return {
     tab: course.tab, code: course.code, name: course.name, lead: course.lead,
+    leadEmail: course.leadEmail || null,
     programme: course.programme, semester: course.semester,
+    programmeGroup: programmeGroupForTab(course.tab),
     credits: course.credits, category: course.category, track: course.track,
     seeType: course.seeType, students: course.students,
     cie1: { a: blankOption(), b: blankOption(), c: blankOption() },
@@ -125,3 +128,17 @@ function num(v) {
 function sum(arr) {
   return arr.reduce((a, b) => a + b, 0);
 }
+
+/** Groups the workbook's fine-grained tabs into the six broad programme
+ *  buckets used for coordinator mapping and report filters. */
+export function programmeGroupForTab(tab) {
+  if (tab.startsWith("BTech")) return "BTech";
+  if (tab.startsWith("MTech")) return "MTech";
+  if (tab.startsWith("Minors")) return "Minors";
+  if (tab === "BCA") return "BCA";
+  if (tab === "BSc") return "BSc";
+  if (tab === "UE") return "UE";
+  return "Other";
+}
+
+export const PROGRAMME_GROUPS = ["BTech", "BCA", "BSc", "MTech", "Minors", "UE"];
