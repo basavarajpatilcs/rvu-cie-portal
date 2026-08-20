@@ -298,7 +298,9 @@ export async function setCoordinator(programmeGroup, { name, email }, user) {
 // Function watching the `notifications` collection (see
 // functions/index.js) — this app only ever writes documents here;
 // it never sends mail directly from the browser.
-//   settings/deadlines        { cieMarksEntryDue, cieComponentSelectionDue, updatedBy, updatedAt }
+//   settings/deadlines        { bySemester: { "<semester>": {
+//                                  cie1Qp, cie1Marks, cie2Qp, cie2Marks, cie3Qp, cie3Marks
+//                                } }, updatedBy, updatedAt }
 //   notifications/{autoId}    { type, subject, message, recipients, status, createdBy, createdAt }
 // ============================================================
 

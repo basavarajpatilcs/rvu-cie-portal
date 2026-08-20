@@ -1,11 +1,24 @@
 import { requireAuth, isAdmin } from "./auth.js";
 import { renderSharedTopbar } from "./topbar.js";
-import { PROGRAMME_GROUPS } from "./cie-data.js";
+import { PROGRAMME_GROUPS, loadCieCourseData, flattenCieCourses } from "./cie-data.js";
+import { loadCourseData, flattenCourses } from "./data.js";
+import { uniqueSemesters } from "./section-reports.js";
 import {
   fetchCoordinators, setCoordinator,
   fetchFacultyDirectory, fetchDeadlines, setDeadlines,
   queueNotification, fetchRecentNotifications,
 } from "./store.js";
+
+// The six fields tracked per semester: separate QP-submission and
+// marks-entry-confirmation deadlines for each of CIE-1/2/3.
+const DEADLINE_FIELDS = [
+  { key: "cie1Qp", label: "CIE-1 QP Submission" },
+  { key: "cie1Marks", label: "CIE-1 Marks Entry" },
+  { key: "cie2Qp", label: "CIE-2 QP Submission" },
+  { key: "cie2Marks", label: "CIE-2 Marks Entry" },
+  { key: "cie3Qp", label: "CIE-3 QP Submission" },
+  { key: "cie3Marks", label: "CIE-3 Marks Entry" },
+];
 
 async function main() {
   const user = await requireAuth();
@@ -22,18 +35,26 @@ async function main() {
     return;
   }
 
-  const [coordinators, facultyDirectory, deadlines, notifications] = await Promise.all([
+  const [coordinators, facultyDirectory, deadlines, notifications, courseData, cieCourseData] = await Promise.all([
     fetchCoordinators(), fetchFacultyDirectory(), fetchDeadlines(), fetchRecentNotifications(),
+    loadCourseData(), loadCieCourseData(),
+  ]);
+
+  // Union of every semester value used across both trackers (I/III/V/VII,
+  // plus BCA/BSc/MTech/UE/Minors' "All" or batch-year labels).
+  const semesters = uniqueSemesters([
+    ...flattenCourses(courseData),
+    ...flattenCieCourses(cieCourseData),
   ]);
 
   renderSharedTopbar(user, { onRefresh: refreshAll });
 
   document.getElementById("loadingVeil").remove();
-  document.getElementById("appRoot").innerHTML = shellHtml();
+  document.getElementById("appRoot").innerHTML = shellHtml(semesters);
 
   renderCoordinatorPanel(coordinators);
-  renderDeadlinesPanel(deadlines);
-  renderNotifyPanel(facultyDirectory, deadlines);
+  renderDeadlinesPanel(deadlines, semesters);
+  renderNotifyPanel(facultyDirectory, deadlines, semesters);
   renderNotificationsLog(notifications);
   renderRecommendationsPanel();
 
@@ -42,8 +63,8 @@ async function main() {
       fetchCoordinators(), fetchFacultyDirectory(), fetchDeadlines(), fetchRecentNotifications(),
     ]);
     renderCoordinatorPanel(c);
-    renderDeadlinesPanel(d);
-    renderNotifyPanel(f, d);
+    renderDeadlinesPanel(d, semesters);
+    renderNotifyPanel(f, d, semesters);
     renderNotificationsLog(n);
   }
 
@@ -83,48 +104,67 @@ async function main() {
     });
   }
 
-  // ---------- Deadlines ----------
+  // ---------- Deadlines (per semester, per CIE stage, QP vs Marks) ----------
 
-  function renderDeadlinesPanel(d) {
-    document.getElementById("dueMarksEntry").value = d.cieMarksEntryDue || "";
-    document.getElementById("dueComponentSelection").value = d.cieComponentSelectionDue || "";
+  let deadlinesState = { bySemester: {} };
+
+  function renderDeadlinesPanel(deadlines, semesterList) {
+    deadlinesState = { bySemester: { ...(deadlines.bySemester || {}) } };
+    const body = document.getElementById("deadlinesTableBody");
+    body.innerHTML = semesterList.map((sem) => {
+      const row = deadlinesState.bySemester[sem] || {};
+      return `
+        <tr data-semester="${escapeAttr(sem)}">
+          <td><strong>${escapeHtml(sem)}</strong></td>
+          ${DEADLINE_FIELDS.map((f) => `<td><input type="date" class="deadline-input" data-field="${f.key}" value="${row[f.key] || ""}" /></td>`).join("")}
+          <td><button type="button" class="btn btn--outline btn--sm deadline-save-btn">Save</button></td>
+        </tr>`;
+    }).join("");
+
+    body.querySelectorAll(".deadline-save-btn").forEach((btn) => {
+      btn.addEventListener("click", async () => {
+        const tr = btn.closest("tr");
+        const sem = tr.dataset.semester;
+        const row = {};
+        tr.querySelectorAll(".deadline-input").forEach((inp) => { row[inp.dataset.field] = inp.value || null; });
+        deadlinesState.bySemester[sem] = row;
+        btn.disabled = true;
+        btn.textContent = "Saving\u2026";
+        try {
+          // Write the whole map (not a dotted field path) — setDoc(merge)
+          // treats a key containing a "." as a literal field name, not a
+          // nested path, so we merge client-side and send the full object.
+          await setDeadlines({ bySemester: deadlinesState.bySemester }, user);
+          btn.textContent = "Saved \u2713";
+        } catch (err) {
+          console.error(err);
+          alert("Could not save deadlines for this semester. Check your connection and try again.");
+        } finally {
+          setTimeout(() => { btn.textContent = "Save"; btn.disabled = false; }, 1000);
+        }
+      });
+    });
   }
-
-  document.addEventListener("click", async (e) => {
-    if (e.target.id !== "saveDeadlinesBtn") return;
-    const btn = e.target;
-    btn.disabled = true;
-    btn.textContent = "Saving\u2026";
-    try {
-      await setDeadlines({
-        cieMarksEntryDue: document.getElementById("dueMarksEntry").value || null,
-        cieComponentSelectionDue: document.getElementById("dueComponentSelection").value || null,
-      }, user);
-      btn.textContent = "Saved \u2713";
-    } catch (err) {
-      console.error(err);
-      alert("Could not save deadlines. Check your connection and try again.");
-    } finally {
-      setTimeout(() => { btn.textContent = "Save Deadlines"; btn.disabled = false; }, 1000);
-    }
-  });
 
   // ---------- Notifications ----------
 
-  function renderNotifyPanel(facultyDirectory, d) {
+  function renderNotifyPanel(facultyDirectory, deadlines, semesterList) {
     document.getElementById("loadAllFacultyBtn").onclick = () => {
       const emails = Object.values(facultyDirectory).map((f) => f.email).filter(Boolean);
       document.getElementById("notifyRecipients").value = emails.join(", ");
     };
-    document.getElementById("quickMarksReminderBtn").onclick = () => {
-      document.getElementById("notifySubject").value = "Reminder: CIE Marks Entry Due";
-      document.getElementById("notifyMessage").value =
-        `This is a reminder that CIE-1/2/3 marks entry (and question paper + answer key confirmation) is due ${d.cieMarksEntryDue ? `on ${d.cieMarksEntryDue}` : "soon"}. Please log in to the RVU CIE Tracker and complete any pending sections under "My Courses".`;
-    };
-    document.getElementById("quickComponentReminderBtn").onclick = () => {
-      document.getElementById("notifySubject").value = "Reminder: CIE Component Selection Due";
-      document.getElementById("notifyMessage").value =
-        `This is a reminder that CIE component (evaluation method) selection for CIE-1/2/3 is due ${d.cieComponentSelectionDue ? `on ${d.cieComponentSelectionDue}` : "soon"}. Please log in to the RVU CIE Tracker and complete your entries under "CIE Components".`;
+
+    document.getElementById("insertDeadlineSummaryBtn").onclick = () => {
+      const sem = document.getElementById("notifySemesterSelect").value;
+      const row = (deadlines.bySemester || {})[sem] || {};
+      const lines = DEADLINE_FIELDS
+        .filter((f) => row[f.key])
+        .map((f) => `- ${f.label}: ${row[f.key]}`);
+
+      document.getElementById("notifySubject").value = `Reminder: Semester ${sem} CIE Deadlines`;
+      document.getElementById("notifyMessage").value = lines.length
+        ? `The following CIE deadlines are coming up for Semester ${sem}:\n\n${lines.join("\n")}\n\nPlease log in to the RVU CIE Tracker and complete any pending items under "My Courses" (marks entry, QP/answer-key confirmation) or "CIE Components" (evaluation method + marks selection).`
+        : `No deadlines are currently set for Semester ${sem} on the Settings page \u2014 set them above first, then re-click this button.`;
     };
   }
 
@@ -200,13 +240,13 @@ function renderRecommendationsPanel() {
     </div>`;
 }
 
-function shellHtml() {
+function shellHtml(semesters) {
   return `
     <div class="page-head">
       <div>
         <span class="eyebrow">Settings</span>
         <h1>Coordinators, Deadlines &amp; Notifications</h1>
-        <p>Admin-only controls: assign programme coordinators, set due dates, and send reminder or general email notifications.</p>
+        <p>Admin-only controls: assign programme coordinators, set due dates per semester, and send reminder or general email notifications.</p>
       </div>
     </div>
 
@@ -223,15 +263,21 @@ function shellHtml() {
     </div>
 
     <div class="panel">
-      <div class="panel__head"><h2>Submission Deadlines</h2></div>
-      <div class="panel__body">
-        <div class="cie-single-row" style="max-width:520px;">
-          <div><label>CIE Marks Entry Due</label><input type="date" id="dueMarksEntry" /></div>
-          <div><label>CIE Component Selection Due</label><input type="date" id="dueComponentSelection" /></div>
-        </div>
-        <div class="cie-save-row">
-          <button type="button" class="btn btn--primary btn--sm" id="saveDeadlinesBtn">Save Deadlines</button>
-        </div>
+      <div class="panel__head"><h2>Submission Deadlines &mdash; by Semester</h2>
+        <span style="font-size:12px;color:var(--ink-soft);">Separate QP-submission and marks-entry deadlines for each of CIE-1/2/3, per semester. Save each row independently.</span>
+      </div>
+      <div class="panel__body" style="overflow-x:auto;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Semester</th>
+              ${DEADLINE_FIELDS.map((f) => `<th>${f.label}</th>`).join("")}
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="deadlinesTableBody"></tbody>
+        </table>
+        ${semesters.length === 0 ? `<p style="color:var(--ink-soft);font-size:13px;">No semesters found in the course data yet.</p>` : ""}
       </div>
     </div>
 
@@ -240,9 +286,11 @@ function shellHtml() {
         <span style="font-size:12px;color:var(--ink-soft);">Queues an email \u2014 actually delivered by the notification Cloud Function (see functions/README.md).</span>
       </div>
       <div class="panel__body">
-        <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
-          <button type="button" class="btn btn--outline btn--sm" id="quickMarksReminderBtn">Fill: CIE Marks Entry Reminder</button>
-          <button type="button" class="btn btn--outline btn--sm" id="quickComponentReminderBtn">Fill: CIE Component Selection Reminder</button>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px;">
+          <select id="notifySemesterSelect" style="padding:7px 9px;border:1px solid var(--line);border-radius:5px;">
+            ${semesters.map((s) => `<option>${escapeHtml(String(s))}</option>`).join("")}
+          </select>
+          <button type="button" class="btn btn--outline btn--sm" id="insertDeadlineSummaryBtn">Insert deadline summary for selected semester</button>
         </div>
         <div style="margin-bottom:10px;">
           <label style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);margin-bottom:3px;">Subject</label>
