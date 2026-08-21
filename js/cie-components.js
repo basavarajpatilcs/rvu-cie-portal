@@ -534,7 +534,7 @@ function appShellHtml(myName, admin, missingCount, totalCourses, seededCount) {
       </div>` : ""}
 
     <div class="topbar__nav" style="background:transparent;padding:0;margin-bottom:16px;display:flex;gap:6px;">
-      <button type="button" class="cie-page-tab btn btn--outline btn--sm active" data-panel="entry" style="border-color:var(--maroon);">Marks Entry</button>
+      <button type="button" class="cie-page-tab btn btn--outline btn--sm active" data-panel="entry" style="border-color:var(--maroon);">CIE Component Selection</button>
       <button type="button" class="cie-page-tab btn btn--outline btn--sm" data-panel="report">Consolidated Report</button>
       ${admin ? `<button type="button" class="cie-page-tab btn btn--outline btn--sm" data-panel="admin">Admin Tools</button>` : ""}
     </div>
