@@ -318,6 +318,146 @@ export async function setDeadlines(patch, user) {
   );
 }
 
+// ============================================================
+// TLP option extensions — lets an admin add pedagogy types /
+// assessment methods beyond the built-in reference list, for
+// courses that need something not already covered (no code
+// change or redeploy required). Lives in the same `settings`
+// collection as deadlines, so no new rules are needed.
+//   settings/tlpOptions   { extraPedagogyTypes: [{name,description}],
+//                            extraAssessmentMethods: [{name,description}],
+//                            updatedBy, updatedAt }
+// ============================================================
+
+export async function fetchTlpOptions() {
+  const snap = await getDoc(doc(db, "settings", "tlpOptions"));
+  return snap.exists() ? snap.data() : { extraPedagogyTypes: [], extraAssessmentMethods: [] };
+}
+
+/** Admin-only. */
+export async function setTlpOptions(patch, user) {
+  await setDoc(
+    doc(db, "settings", "tlpOptions"),
+    { ...patch, updatedBy: user.email, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
+}
+
+// ============================================================
+// Portion (Syllabus) Coverage — week-wise cumulative classes-
+// taken and syllabus-% covered, per section. Reuses the exact
+// same section ids as `sections`/`tlpEntries` but writes to its
+// own collection, so nothing existing is touched.
+//   portionCoverage/{sectionId}   { ...section facts..., totalClassesAllotted,
+//                                    portionToComplete, weeks: [{ce,ch,ep,cp} x16],
+//                                    updatedBy, updatedAt }
+//   settings/portionWeeks         { academicYear, weekLabels: [16 strings], updatedBy, updatedAt }
+// ============================================================
+
+export async function fetchAllPortionCoverage() {
+  const snap = await getDocs(collection(db, "portionCoverage"));
+  const out = {};
+  snap.forEach((d) => (out[d.id] = d.data()));
+  return out;
+}
+
+/** Any signed-in user (same trust level as `sections`/`tlpEntries`) —
+ *  restricted by rules to only the editable fields. */
+export async function savePortionCoverageEntry(id, patch, user) {
+  await setDoc(
+    doc(db, "portionCoverage", id),
+    { ...patch, updatedBy: user.email, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
+}
+
+/** Admin-only. One-time write of every section row. Safe to re-run: only
+ *  creates rows that don't already exist. */
+export async function seedPortionCoverage(sectionRows, emptyPortionDocFn, onProgress) {
+  const existing = await fetchAllPortionCoverage();
+  const rows = sectionRows.filter((r) => !existing[r.id]);
+  const all = rows.map((r) => ({ id: r.id, data: emptyPortionDocFn(r) }));
+
+  let written = 0;
+  const CHUNK = 400;
+  for (let i = 0; i < all.length; i += CHUNK) {
+    const chunk = all.slice(i, i + CHUNK);
+    const batch = writeBatch(db);
+    for (const item of chunk) batch.set(doc(db, "portionCoverage", item.id), item.data);
+    await batch.commit();
+    written += chunk.length;
+    if (onProgress) onProgress(written, all.length);
+  }
+  return written;
+}
+
+/** The 16 week date-range labels + academic year, set once per term from
+ *  Settings and shared by every section's Portion Coverage card. */
+export async function fetchPortionWeeks() {
+  const snap = await getDoc(doc(db, "settings", "portionWeeks"));
+  return snap.exists() ? snap.data() : { academicYear: "", weekLabels: [] };
+}
+
+/** Admin-only. */
+export async function setPortionWeeks(patch, user) {
+  await setDoc(
+    doc(db, "settings", "portionWeeks"),
+    { ...patch, updatedBy: user.email, updatedAt: serverTimestamp() },
+    { merge: true }
+  );
+}
+
+// ============================================================
+// Faculty report submissions (TLP tab) — each faculty can attach
+// multiple report links (Google Drive, or any URL) per section,
+// plus a dashboard to monitor who has/hasn't submitted. Reuses
+// the same section ids as `sections`/`tlpEntries`/`portionCoverage`
+// but its own collection, so nothing existing is touched. Unlike
+// the other trackers, faculty can create their own row directly
+// (no admin seeding needed) — reports are low-risk, link-only data.
+//   facultyReports/{sectionId}   { ...section facts...,
+//     reports: [{ id, title, url, addedBy, addedAt }],
+//     updatedBy, updatedAt }
+// ============================================================
+
+export async function fetchAllFacultyReports() {
+  const snap = await getDocs(collection(db, "facultyReports"));
+  const out = {};
+  snap.forEach((d) => (out[d.id] = d.data()));
+  return out;
+}
+
+/** Any signed-in user. Creates the row on first use (no seeding step) if
+ *  it doesn't already exist, then appends one report link. Section
+ *  identity fields are only written on that first creation — later calls
+ *  touch just `reports`/audit fields, matching what the rules allow. */
+export async function addFacultyReport(id, sectionFacts, report, user) {
+  const ref = doc(db, "facultyReports", id);
+  const snap = await getDoc(ref);
+  const exists = snap.exists();
+  const existingReports = exists ? (snap.data().reports || []) : [];
+  const reports = [...existingReports, { ...report, addedBy: user.email, addedAt: new Date().toISOString() }];
+  await setDoc(
+    ref,
+    {
+      ...(exists ? {} : sectionFacts),
+      reports,
+      updatedBy: user.email,
+      updatedAt: serverTimestamp(),
+    },
+    { merge: true }
+  );
+}
+
+/** Any signed-in user (rules still restrict this to the `reports` field). */
+export async function removeFacultyReport(id, reportId, user) {
+  const ref = doc(db, "facultyReports", id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  const reports = (snap.data().reports || []).filter((r) => r.id !== reportId);
+  await setDoc(ref, { reports, updatedBy: user.email, updatedAt: serverTimestamp() }, { merge: true });
+}
+
 /** Admin-only. Queues an email — a Cloud Function trigger picks this doc
  *  up, sends it, and flips `status` to "sent" (or "failed"). recipients
  *  is an array of email addresses; type is 'reminder' | 'general'. */

@@ -3,10 +3,13 @@ import { renderSharedTopbar } from "./topbar.js";
 import { PROGRAMME_GROUPS, loadCieCourseData, flattenCieCourses } from "./cie-data.js";
 import { loadCourseData, flattenCourses } from "./data.js";
 import { uniqueSemesters } from "./section-reports.js";
+import { WEEK_COUNT } from "./portion-data.js";
 import {
   fetchCoordinators, setCoordinator,
   fetchFacultyDirectory, fetchDeadlines, setDeadlines,
   queueNotification, fetchRecentNotifications,
+  fetchTlpOptions, setTlpOptions,
+  fetchPortionWeeks, setPortionWeeks,
 } from "./store.js";
 
 // The six fields tracked per semester: separate QP-submission and
@@ -35,9 +38,9 @@ async function main() {
     return;
   }
 
-  const [coordinators, facultyDirectory, deadlines, notifications, courseData, cieCourseData] = await Promise.all([
+  const [coordinators, facultyDirectory, deadlines, notifications, courseData, cieCourseData, tlpExtras, portionWeeks] = await Promise.all([
     fetchCoordinators(), fetchFacultyDirectory(), fetchDeadlines(), fetchRecentNotifications(),
-    loadCourseData(), loadCieCourseData(),
+    loadCourseData(), loadCieCourseData(), fetchTlpOptions(), fetchPortionWeeks(),
   ]);
 
   // Union of every semester value used across both trackers (I/III/V/VII,
@@ -56,16 +59,21 @@ async function main() {
   renderDeadlinesPanel(deadlines, semesters);
   renderNotifyPanel(facultyDirectory, deadlines, semesters);
   renderNotificationsLog(notifications);
+  renderTlpOptionsPanel(tlpExtras);
+  renderPortionWeeksPanel(portionWeeks);
   renderRecommendationsPanel();
 
   async function refreshAll() {
-    const [c, f, d, n] = await Promise.all([
+    const [c, f, d, n, tx, pw] = await Promise.all([
       fetchCoordinators(), fetchFacultyDirectory(), fetchDeadlines(), fetchRecentNotifications(),
+      fetchTlpOptions(), fetchPortionWeeks(),
     ]);
     renderCoordinatorPanel(c);
     renderDeadlinesPanel(d, semesters);
     renderNotifyPanel(f, d, semesters);
     renderNotificationsLog(n);
+    renderTlpOptionsPanel(tx);
+    renderPortionWeeksPanel(pw);
   }
 
   // ---------- Programme Coordinator Mapping ----------
@@ -212,6 +220,99 @@ async function main() {
         <td>${escapeHtml(n.createdBy || "")}</td>
       </tr>`).join("") || `<tr><td colspan="5" style="color:var(--ink-soft);">No notifications sent yet.</td></tr>`;
   }
+
+  // ---------- TLP: additional pedagogy types / assessment methods ----------
+
+  function renderTlpOptionsPanel(extras) {
+    const el = document.getElementById("tlpOptionsPanel");
+    if (!el) return;
+
+    const renderChips = (containerId, items, kind) => {
+      const container = document.getElementById(containerId);
+      container.innerHTML = items.length
+        ? items.map((it, i) => `
+            <span style="display:inline-flex;align-items:center;gap:6px;background:var(--paper);border:1px solid var(--line);border-radius:999px;padding:4px 10px;font-size:12.5px;margin:0 6px 6px 0;">
+              ${escapeHtml(it.name)}
+              <button type="button" class="tlp-opt-remove" data-kind="${kind}" data-index="${i}" style="border:none;background:none;color:var(--red);cursor:pointer;font-weight:700;line-height:1;padding:0;">&times;</button>
+            </span>`).join("")
+        : `<span style="font-size:12.5px;color:var(--ink-soft);">None added yet.</span>`;
+    };
+
+    const draw = (currentExtras) => {
+      renderChips("tlpExtraPedagogyChips", currentExtras.extraPedagogyTypes || [], "pedagogy");
+      renderChips("tlpExtraAssessmentChips", currentExtras.extraAssessmentMethods || [], "assessment");
+      el.querySelectorAll(".tlp-opt-remove").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+          const kind = btn.dataset.kind;
+          const idx = Number(btn.dataset.index);
+          const field = kind === "pedagogy" ? "extraPedagogyTypes" : "extraAssessmentMethods";
+          currentExtras[field] = (currentExtras[field] || []).filter((_, i) => i !== idx);
+          await setTlpOptions(currentExtras, user);
+          draw(currentExtras);
+        });
+      });
+    };
+
+    draw(extras);
+
+    document.getElementById("addPedagogyBtn").onclick = async () => {
+      const input = document.getElementById("newPedagogyInput");
+      const name = input.value.trim();
+      if (!name) return;
+      extras.extraPedagogyTypes = [...(extras.extraPedagogyTypes || []), { name }];
+      await setTlpOptions(extras, user);
+      input.value = "";
+      draw(extras);
+    };
+
+    document.getElementById("addAssessmentBtn").onclick = async () => {
+      const input = document.getElementById("newAssessmentInput");
+      const name = input.value.trim();
+      if (!name) return;
+      extras.extraAssessmentMethods = [...(extras.extraAssessmentMethods || []), { name }];
+      await setTlpOptions(extras, user);
+      input.value = "";
+      draw(extras);
+    };
+  }
+
+  // ---------- Portion Coverage: week date-range schedule ----------
+
+  function renderPortionWeeksPanel(portionWeeks) {
+    const el = document.getElementById("portionWeeksPanel");
+    if (!el) return;
+
+    const labels = portionWeeks.weekLabels && portionWeeks.weekLabels.length === WEEK_COUNT
+      ? portionWeeks.weekLabels
+      : Array.from({ length: WEEK_COUNT }, () => "");
+
+    document.getElementById("pcAcademicYear").value = portionWeeks.academicYear || "";
+    const grid = document.getElementById("pcWeekLabelsGrid");
+    grid.innerHTML = labels.map((label, i) => `
+      <div>
+        <label style="display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);margin-bottom:3px;">Week ${i + 1}</label>
+        <input type="text" class="pc-week-label-input" data-week="${i}" value="${escapeAttr(label)}" placeholder="e.g. 3/8 to 8/8" style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:5px;font-size:12.5px;" />
+      </div>`).join("");
+
+    document.getElementById("savePortionWeeksBtn").onclick = async (e) => {
+      const btn = e.currentTarget;
+      const weekLabels = [...grid.querySelectorAll(".pc-week-label-input")]
+        .sort((a, b) => Number(a.dataset.week) - Number(b.dataset.week))
+        .map((inp) => inp.value.trim());
+      const academicYear = document.getElementById("pcAcademicYear").value.trim();
+      btn.disabled = true;
+      btn.textContent = "Saving\u2026";
+      try {
+        await setPortionWeeks({ academicYear, weekLabels }, user);
+        btn.textContent = "Saved \u2713";
+      } catch (err) {
+        console.error(err);
+        alert("Could not save week schedule. Check your connection and try again.");
+      } finally {
+        setTimeout(() => { btn.textContent = "Save Week Schedule"; btn.disabled = false; }, 1000);
+      }
+    };
+  }
 }
 
 // ---------- Expert recommendations (static, admin-only) ----------
@@ -321,6 +422,48 @@ function shellHtml(semesters) {
         </table>
       </div>
     </div>
+
+    <div class="panel">
+      <div class="panel__head"><h2>TLP &mdash; Additional Pedagogy Types &amp; Assessment Methods</h2>
+        <span style="font-size:12px;color:var(--ink-soft);">Shows up on the TLP page immediately, portal-wide, no redeploy needed.</span>
+      </div>
+      <div class="panel__body">
+        <div style="margin-bottom:16px;">
+          <label style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);margin-bottom:6px;">Pedagogy Types</label>
+          <div id="tlpExtraPedagogyChips" style="margin-bottom:8px;"></div>
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="newPedagogyInput" placeholder="e.g. Design Thinking" style="flex:1;max-width:320px;padding:6px 9px;border:1px solid var(--line);border-radius:5px;font-size:13px;" />
+            <button type="button" class="btn btn--outline btn--sm" id="addPedagogyBtn">+ Add</button>
+          </div>
+        </div>
+        <div>
+          <label style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);margin-bottom:6px;">Assessment Methods</label>
+          <div id="tlpExtraAssessmentChips" style="margin-bottom:8px;"></div>
+          <div style="display:flex;gap:6px;">
+            <input type="text" id="newAssessmentInput" placeholder="e.g. Peer Review" style="flex:1;max-width:320px;padding:6px 9px;border:1px solid var(--line);border-radius:5px;font-size:13px;" />
+            <button type="button" class="btn btn--outline btn--sm" id="addAssessmentBtn">+ Add</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div id="tlpOptionsPanel"></div>
+
+    <div class="panel">
+      <div class="panel__head"><h2>Portion Coverage &mdash; Week Schedule</h2>
+        <span style="font-size:12px;color:var(--ink-soft);">Set once per term &mdash; the 16 week date ranges shown on every Portion Coverage card.</span>
+      </div>
+      <div class="panel__body">
+        <div style="margin-bottom:14px;max-width:360px;">
+          <label style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);margin-bottom:3px;">Academic Year</label>
+          <input type="text" id="pcAcademicYear" placeholder="e.g. 2025-26 (ODD SEM)" style="width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:5px;" />
+        </div>
+        <div id="pcWeekLabelsGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;margin-bottom:14px;"></div>
+        <div class="cie-save-row">
+          <button type="button" class="btn btn--primary btn--sm" id="savePortionWeeksBtn">Save Week Schedule</button>
+        </div>
+      </div>
+    </div>
+    <div id="portionWeeksPanel"></div>
 
     <div id="recommendationsPanel"></div>
   `;

@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RVU CIE Tracker — TLP (Teaching-Learning Pedagogy)</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<div class="loading-veil" id="loadingVeil">
+  <div class="spinner"></div>
+  <span>Loading pedagogy data&hellip;</span>
+</div>
+
+<header class="topbar">
+  <div class="topbar__brand">
+    <span class="mark">RV</span>
+    RVU CIE Tracker
+  </div>
+  <nav class="topbar__nav">
+    <a href="cie-components.html">CIE Components</a>
+    <a href="faculty.html">My Courses</a>
+    <a href="tlp.html" class="active">TLP</a>
+    <a href="portion-coverage.html">Portion Coverage</a>
+    <a href="admin.html" id="adminNavLink" style="display:none;">Coordinator Dashboard</a>
+    <a href="settings.html" id="settingsNavLink" style="display:none;">Settings</a>
+  </nav>
+  <div class="topbar__user" id="topbarUser"></div>
+</header>
+
+<main class="page" id="appRoot"></main>
+
+<p class="footer-note">RV University · School of Computer Science &amp; Engineering · Teaching-Learning Pedagogy</p>
+
+<script type="module" src="js/tlp.js"></script>
+</body>
+</html>
