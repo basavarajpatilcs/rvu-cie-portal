@@ -1,4 +1,4 @@
-import { requireAuth, isAdmin, initials } from "./auth.js";
+import { requireAuth, isEffectiveAdmin, initials } from "./auth.js";
 import { loadCourseData, flattenSections, flattenCourses, uniqueFacultyNames } from "./data.js";
 import {
   fetchAllSections, fetchAllQp, setSectionStage, setQpStatus,
@@ -29,8 +29,9 @@ async function main() {
   const qpDocs = { ...qpDocsRaw };
   const cieDocs = { ...cieDocsRaw };
   const cieCourses = flattenCieCourses(cieCourseData);
+  const admin = await isEffectiveAdmin(user.email);
 
-  renderSharedTopbar(user, { onRefresh: refreshData });
+  renderSharedTopbar(user, { admin, onRefresh: refreshData });
 
   const sectionRows = flattenSections(courseData);
   const courseRows = flattenCourses(courseData);
@@ -66,7 +67,7 @@ async function main() {
   }
 
   function renderApp() {
-    document.getElementById("appRoot").innerHTML = appShellHtml(myName, uniqueSemesters(courseRows));
+    document.getElementById("appRoot").innerHTML = appShellHtml(myName, uniqueSemesters(courseRows), admin);
     wireFilterBar(myName);
     wireTabs();
     wireReportControls();
@@ -500,7 +501,7 @@ function replaceContents(target, fresh) {
   Object.assign(target, fresh);
 }
 
-function appShellHtml(myName, semesters) {
+function appShellHtml(myName, semesters, admin) {
   return `
     <div class="page-head">
       <div>
@@ -530,7 +531,7 @@ function appShellHtml(myName, semesters) {
         </select>
         <input type="search" id="filterSearch" placeholder="Search course, code, or faculty name" />
         <label class="toggle-chip">
-          <input type="checkbox" id="filterMine" ${myName ? "checked" : ""} />
+          <input type="checkbox" id="filterMine" ${myName && !admin ? "checked" : ""} />
           My sections only
         </label>
       </div>

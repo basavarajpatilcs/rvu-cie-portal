@@ -8,10 +8,13 @@ import { signOutUser, isAdmin } from "./auth.js";
 
 /** onRefresh: called when the Refresh button is clicked. Defaults to a
  *  full reload, which is always correct even if a page doesn't wire up
- *  anything smarter. */
-export function renderSharedTopbar(user, { roleBadge, onRefresh, showAdminNav, showSettingsNav } = {}) {
-  const admin = isAdmin(user.email);
-  const badge = roleBadge !== undefined ? roleBadge : (admin ? `<span class="badge-role">Coordinator</span>` : "");
+ *  anything smarter.
+ *  admin: pass the already-resolved isEffectiveAdmin() result so the
+ *  topbar/nav reflect Firestore-backed "Portal Admins" too, not just the
+ *  hardcoded list. Falls back to the sync (hardcoded-only) check if omitted. */
+export function renderSharedTopbar(user, { admin, roleBadge, onRefresh, showAdminNav, showSettingsNav } = {}) {
+  const isAdminUser = admin !== undefined ? admin : isAdmin(user.email);
+  const badge = roleBadge !== undefined ? roleBadge : (isAdminUser ? `<span class="badge-role">Coordinator</span>` : "");
 
   const el = document.getElementById("topbarUser");
   if (!el) return;
@@ -46,11 +49,11 @@ export function renderSharedTopbar(user, { roleBadge, onRefresh, showAdminNav, s
     }
   });
 
-  if (showAdminNav !== false && (admin || showAdminNav)) {
+  if (showAdminNav !== false && (isAdminUser || showAdminNav)) {
     const adminLink = document.getElementById("adminNavLink");
     if (adminLink) adminLink.style.display = "inline-block";
   }
-  if (showSettingsNav !== false && (admin || showSettingsNav)) {
+  if (showSettingsNav !== false && (isAdminUser || showSettingsNav)) {
     const settingsLink = document.getElementById("settingsNavLink");
     if (settingsLink) settingsLink.style.display = "inline-block";
   }

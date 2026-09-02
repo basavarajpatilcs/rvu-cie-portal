@@ -1,4 +1,4 @@
-import { requireAuth, isAdmin } from "./auth.js";
+import { requireAuth, isEffectiveAdmin } from "./auth.js";
 import { loadCourseData, flattenSections } from "./data.js";
 import {
   fetchAllTlp, saveTlpEntry, seedTlpEntries, getFacultyLink, fetchTlpOptions, fetchAllCie,
@@ -11,7 +11,7 @@ async function main() {
   const user = await requireAuth();
   if (!user) return;
 
-  const admin = isAdmin(user.email);
+  const admin = await isEffectiveAdmin(user.email);
 
   const [courseData, tlpDocsRaw, refBase, extras, link, cieDocsRaw, reportDocsRaw] = await Promise.all([
     loadCourseData(), fetchAllTlp(), loadTlpReference(), fetchTlpOptions(), getFacultyLink(user.uid), fetchAllCie(), fetchAllFacultyReports(),
@@ -26,10 +26,10 @@ async function main() {
 
   const missingCount = sectionRows.filter((s) => !tlpDocs[s.id]).length;
 
-  renderSharedTopbar(user, { onRefresh: refreshData });
+  renderSharedTopbar(user, { admin, onRefresh: refreshData });
 
   document.getElementById("loadingVeil").remove();
-  document.getElementById("appRoot").innerHTML = shellHtml(sectionRows, admin, missingCount);
+  document.getElementById("appRoot").innerHTML = shellHtml(sectionRows, admin, missingCount, myName);
   wireProgrammeTabs();
   wireFilterBar();
   wireViewTabs();
@@ -145,7 +145,6 @@ async function main() {
     const grid = card.querySelector(".tlp-pedagogy-grid");
     const exists = [...grid.querySelectorAll(".tlp-pedagogy-check")].some((c) => c.value.toLowerCase() === name.toLowerCase());
     if (exists) {
-      // Already present (maybe just unchecked) — check it instead of duplicating.
       const cb = [...grid.querySelectorAll(".tlp-pedagogy-check")].find((c) => c.value.toLowerCase() === name.toLowerCase());
       cb.checked = true;
     } else {
@@ -423,56 +422,6 @@ function tlpSummaryHtml(calc, minPedagogy) {
     </div>`;
 }
 
-function reportsCardHtml(item, editable) {
-  const { section, reports } = item;
-  return `
-    <div class="cie-card" data-id="${section.id}">
-      <div class="cie-card__head">
-        <div>
-          <div class="course-card__code">${escapeHtml(section.code)} &mdash; Sec ${escapeHtml(section.section)}</div>
-          <div class="course-card__title">${escapeHtml(section.name)}</div>
-          <div class="cie-card__meta">
-            <span>Faculty: <strong>${section.faculty ? escapeHtml(section.faculty) : "\u26A0 not on record"}</strong></span>
-            <span>${escapeHtml(section.programme)} \u00b7 Sem ${escapeHtml(String(section.semester))}</span>
-          </div>
-        </div>
-        ${reports.length > 0
-          ? `<span class="cie-badge cie-badge--ok">${reports.length} report${reports.length === 1 ? "" : "s"}</span>`
-          : `<span class="cie-badge cie-badge--warn">No reports yet</span>`
-        }
-      </div>
-      <div class="cie-card__body">
-        ${reports.length > 0 ? `
-          <div class="cie-block" style="margin-top:0;">
-            <div class="cie-block__head"><span class="cie-block__title">Submitted Reports</span></div>
-            <ul style="margin:0;padding-left:0;list-style:none;">
-              ${reports.map((r) => `
-                <li style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;">
-                  <span>
-                    <a href="${escapeAttr(r.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--maroon);font-weight:600;">${escapeHtml(r.title)}</a>
-                    <span style="color:var(--ink-soft);font-size:11.5px;"> &mdash; added by ${escapeHtml(r.addedBy || "")}${r.addedAt ? `, ${new Date(r.addedAt).toLocaleDateString()}` : ""}</span>
-                  </span>
-                  ${editable ? `<button type="button" class="tlp-report-remove-btn btn btn--outline btn--sm" data-report-id="${escapeAttr(r.id)}" style="color:var(--red);border-color:var(--red);">Remove</button>` : ""}
-                </li>`).join("")}
-            </ul>
-          </div>` : `<p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 10px;">No reports submitted for this section yet.</p>`}
-
-        ${editable ? `
-          <div class="cie-block">
-            <div class="cie-block__head"><span class="cie-block__title">Add a Report Link</span></div>
-            <div class="cie-single-row" style="grid-template-columns:1fr 2fr auto;align-items:end;">
-              <div><label>Title</label><input type="text" class="tlp-report-title" placeholder="e.g. Weekly Progress Report 1" /></div>
-              <div><label>Google Drive / File Link</label><input type="url" class="tlp-report-url" placeholder="https://drive.google.com/..." /></div>
-              <div><button type="button" class="tlp-report-add-btn btn btn--primary btn--sm">+ Add Report</button></div>
-            </div>
-            <p style="font-size:11px;color:var(--ink-soft);margin:8px 0 0;">Make sure the Drive link's sharing setting allows anyone at RVU with the link to view it.</p>
-          </div>`
-          : `<div class="cie-readonly-note">Read-only &mdash; only ${section.faculty ? escapeHtml(section.faculty) : "this section's faculty"} or a coordinator can add report links here.</div>`
-        }
-      </div>
-    </div>`;
-}
-
 function statusBadgeHtml(calc) {
   if (calc.status === "Completed") return `<span class="cie-badge cie-badge--ok">Completed</span>`;
   if (calc.status === "In Progress") return `<span class="cie-badge cie-badge--progress">In Progress</span>`;
@@ -489,10 +438,6 @@ function tlpCardHtml(item, editable, ref, minPedagogy, cieDoc) {
     .map((m) => `<option value="${escapeAttr(m.name)}" ${selectedVal === m.name ? "selected" : ""}>${escapeHtml(m.name)}</option>`)
     .join("");
 
-  // Read-only reference to the course-level CIE Components record for this
-  // exact course (matched via the same courseKey — no data is duplicated,
-  // this just shows what's already on file so the two modules don't drift
-  // apart without anyone noticing).
   const cieRefChip = (label, methodValue) => methodValue
     ? `<span style="display:inline-block;background:var(--paper);border:1px solid var(--line);border-radius:5px;padding:3px 8px;font-size:11.5px;color:var(--ink-soft);margin-right:6px;">${label}: <strong style="color:var(--ink);">${escapeHtml(methodValue)}</strong></span>`
     : "";
@@ -581,7 +526,57 @@ function tlpCardHtml(item, editable, ref, minPedagogy, cieDoc) {
     </div>`;
 }
 
-function shellHtml(sectionRows, admin, missingCount) {
+function reportsCardHtml(item, editable) {
+  const { section, reports } = item;
+  return `
+    <div class="cie-card" data-id="${section.id}">
+      <div class="cie-card__head">
+        <div>
+          <div class="course-card__code">${escapeHtml(section.code)} &mdash; Sec ${escapeHtml(section.section)}</div>
+          <div class="course-card__title">${escapeHtml(section.name)}</div>
+          <div class="cie-card__meta">
+            <span>Faculty: <strong>${section.faculty ? escapeHtml(section.faculty) : "\u26A0 not on record"}</strong></span>
+            <span>${escapeHtml(section.programme)} \u00b7 Sem ${escapeHtml(String(section.semester))}</span>
+          </div>
+        </div>
+        ${reports.length > 0
+          ? `<span class="cie-badge cie-badge--ok">${reports.length} report${reports.length === 1 ? "" : "s"}</span>`
+          : `<span class="cie-badge cie-badge--warn">No reports yet</span>`
+        }
+      </div>
+      <div class="cie-card__body">
+        ${reports.length > 0 ? `
+          <div class="cie-block" style="margin-top:0;">
+            <div class="cie-block__head"><span class="cie-block__title">Submitted Reports</span></div>
+            <ul style="margin:0;padding-left:0;list-style:none;">
+              ${reports.map((r) => `
+                <li style="display:flex;align-items:center;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px;">
+                  <span>
+                    <a href="${escapeAttr(r.url)}" target="_blank" rel="noopener noreferrer" style="color:var(--maroon);font-weight:600;">${escapeHtml(r.title)}</a>
+                    <span style="color:var(--ink-soft);font-size:11.5px;"> &mdash; added by ${escapeHtml(r.addedBy || "")}${r.addedAt ? `, ${new Date(r.addedAt).toLocaleDateString()}` : ""}</span>
+                  </span>
+                  ${editable ? `<button type="button" class="tlp-report-remove-btn btn btn--outline btn--sm" data-report-id="${escapeAttr(r.id)}" style="color:var(--red);border-color:var(--red);">Remove</button>` : ""}
+                </li>`).join("")}
+            </ul>
+          </div>` : `<p style="font-size:12.5px;color:var(--ink-soft);margin:0 0 10px;">No reports submitted for this section yet.</p>`}
+
+        ${editable ? `
+          <div class="cie-block">
+            <div class="cie-block__head"><span class="cie-block__title">Add a Report Link</span></div>
+            <div class="cie-single-row" style="grid-template-columns:1fr 2fr auto;align-items:end;">
+              <div><label>Title</label><input type="text" class="tlp-report-title" placeholder="e.g. Weekly Progress Report 1" /></div>
+              <div><label>Google Drive / File Link</label><input type="url" class="tlp-report-url" placeholder="https://drive.google.com/..." /></div>
+              <div><button type="button" class="tlp-report-add-btn btn btn--primary btn--sm">+ Add Report</button></div>
+            </div>
+            <p style="font-size:11px;color:var(--ink-soft);margin:8px 0 0;">Make sure the Drive link's sharing setting allows anyone at RVU with the link to view it.</p>
+          </div>`
+          : `<div class="cie-readonly-note">Read-only &mdash; only ${section.faculty ? escapeHtml(section.faculty) : "this section's faculty"} or a coordinator can add report links here.</div>`
+        }
+      </div>
+    </div>`;
+}
+
+function shellHtml(sectionRows, admin, missingCount, myName) {
   const counts = {};
   for (const t of PROGRAMME_TABS) counts[t] = sectionRows.filter((s) => s.programme === t).length;
 
@@ -618,7 +613,7 @@ function shellHtml(sectionRows, admin, missingCount) {
       <div class="filter-bar">
         <input type="search" id="tlpSearch" placeholder="Search course, code, section, or faculty" />
         <label class="toggle-chip">
-          <input type="checkbox" id="tlpMine" />
+          <input type="checkbox" id="tlpMine" ${myName && !admin ? "checked" : ""} />
           My sections only
         </label>
         <label class="toggle-chip">
@@ -636,7 +631,7 @@ function shellHtml(sectionRows, admin, missingCount) {
       <div class="filter-bar">
         <input type="search" id="tlpReportsSearch" placeholder="Search course, code, section, or faculty" />
         <label class="toggle-chip">
-          <input type="checkbox" id="tlpReportsMine" />
+          <input type="checkbox" id="tlpReportsMine" ${myName && !admin ? "checked" : ""} />
           My sections only
         </label>
         <label class="toggle-chip">

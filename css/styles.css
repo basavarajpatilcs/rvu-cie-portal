@@ -874,44 +874,9 @@ table.data-table {
 }
 
 .cie-page-tab.active { background: var(--maroon-tint); color: var(--maroon-deep); font-weight: 600; }
-.sec-page-tab.active { background: var(--maroon-tint); color: var(--maroon-deep); font-weight: 600; }
 .tlp-programme-tab.active { background: var(--maroon-tint); color: var(--maroon-deep); font-weight: 600; }
-.pc-programme-tab.active { background: var(--maroon-tint); color: var(--maroon-deep); font-weight: 600; }
 .tlp-view-tab.active { background: var(--maroon-tint); color: var(--maroon-deep); font-weight: 600; }
-
-/* ---------- Portion Coverage week table ---------- */
-.pc-week-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: 6px; }
-table.pc-week-table { border-collapse: collapse; font-size: 11.5px; white-space: nowrap; }
-table.pc-week-table th, table.pc-week-table td {
-  border: 1px solid var(--line);
-  padding: 3px 4px;
-  text-align: center;
-}
-table.pc-week-table thead th {
-  background: var(--paper);
-  font-weight: 600;
-  color: var(--ink-soft);
-  font-size: 10px;
-}
-table.pc-week-table th.pc-row-label, table.pc-week-table td.pc-row-label {
-  position: sticky;
-  left: 0;
-  background: #fff;
-  font-weight: 600;
-  text-align: left;
-  z-index: 1;
-  min-width: 90px;
-}
-table.pc-week-table input {
-  width: 44px;
-  border: none;
-  text-align: center;
-  font-size: 11.5px;
-  padding: 2px;
-  background: transparent;
-}
-table.pc-week-table input:disabled { color: var(--ink-soft); }
-table.pc-week-table input:focus { outline: 2px solid var(--maroon); background: #fff; }
+.sec-page-tab.active { background: var(--maroon-tint); color: var(--maroon-deep); font-weight: 600; }
 
 .loading-veil {
   position: fixed; inset: 0;

@@ -1,4 +1,4 @@
-import { requireAuth, isAdmin } from "./auth.js";
+import { requireAuth, isEffectiveAdmin } from "./auth.js";
 import { loadCourseData, flattenSections, flattenCourses, PROGRAMMES } from "./data.js";
 import { fetchAllSections, fetchAllQp, seedDatabase, isSeeded, COMPLETED } from "./store.js";
 import { renderSharedTopbar } from "./topbar.js";
@@ -9,7 +9,7 @@ async function main() {
   const user = await requireAuth();
   if (!user) return;
 
-  const admin = isAdmin(user.email);
+  const admin = await isEffectiveAdmin(user.email);
   document.getElementById("seedPanel").style.display = admin ? "block" : "none";
 
   const courseData = await loadCourseData();
@@ -25,7 +25,7 @@ async function main() {
         <h3>Dashboard not set up yet</h3>
         <p>Ask a coordinator to open this page once to initialise the tracker.</p>
       </div>`;
-    renderSharedTopbar(user, { onRefresh: () => window.location.reload() });
+    renderSharedTopbar(user, { admin, onRefresh: () => window.location.reload() });
     return;
   }
 
@@ -36,7 +36,7 @@ async function main() {
     render(sectionRows, courseRows, sectionDocs, qpDocs);
   }
 
-  renderSharedTopbar(user, { onRefresh: refresh });
+  renderSharedTopbar(user, { admin, onRefresh: refresh });
 
   if (seeded) await refresh();
   else document.getElementById("appRoot").innerHTML = `<div class="empty-state"><h3>Ready to initialise</h3><p>Use the panel above to load the course &amp; section list into the live tracker.</p></div>`;

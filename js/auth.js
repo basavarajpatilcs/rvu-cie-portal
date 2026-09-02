@@ -12,6 +12,8 @@ import {
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 import {
   getFirestore,
+  doc,
+  getDoc,
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 import { firebaseConfig, ALLOWED_DOMAIN, ADMIN_EMAILS } from "./firebase-config.js";
 
@@ -28,6 +30,23 @@ export function isAllowedEmail(email) {
 
 export function isAdmin(email) {
   return !!email && ADMIN_EMAILS.map((e) => e.toLowerCase()).includes(email.toLowerCase());
+}
+
+/** Full admin check: the hardcoded ADMIN_EMAILS list (fast, no network
+ *  call), OR membership in the Firestore-backed settings/portalAdmins
+ *  list (lets existing admins add 3-4 more full admins from the Settings
+ *  page without a code change/redeploy). Mirrors firestore.rules' isAdmin(). */
+export async function isEffectiveAdmin(email) {
+  if (isAdmin(email)) return true;
+  if (!email) return false;
+  try {
+    const snap = await getDoc(doc(db, "settings", "portalAdmins"));
+    if (!snap.exists()) return false;
+    const emails = (snap.data().emails || []).map((e) => e.toLowerCase());
+    return emails.includes(email.toLowerCase());
+  } catch {
+    return false;
+  }
 }
 
 /** Sign in with Google, then enforce the domain restriction client-side.

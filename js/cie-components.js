@@ -1,4 +1,4 @@
-import { requireAuth, isAdmin } from "./auth.js";
+import { requireAuth, isEffectiveAdmin } from "./auth.js";
 import { loadCieCourseData, flattenCieCourses, computeCie, CIE_TABS, programmeGroupForTab } from "./cie-data.js";
 import {
   fetchAllCie, saveCieComponent, seedCieComponents, getFacultyLink,
@@ -15,7 +15,7 @@ async function main() {
   const user = await requireAuth();
   if (!user) return;
 
-  const admin = isAdmin(user.email);
+  const admin = await isEffectiveAdmin(user.email);
 
   const [cieCourseData, cieDocsRaw, link, facultyDirectoryRaw, coordinatorsRaw] = await Promise.all([
     loadCieCourseData(),
@@ -39,6 +39,7 @@ async function main() {
     .map(([g]) => g);
 
   renderSharedTopbar(user, {
+    admin,
     roleBadge: admin
       ? `<span class="badge-role">Coordinator (Admin)</span>`
       : myCoordProgrammes.length ? `<span class="badge-role">${escapeHtml(myCoordProgrammes.join(", "))} Coordinator</span>` : "",
@@ -46,7 +47,7 @@ async function main() {
   });
 
   document.getElementById("loadingVeil").remove();
-  document.getElementById("appRoot").innerHTML = appShellHtml(myName, admin, missingCount, courses.length, seededCount);
+  document.getElementById("appRoot").innerHTML = appShellHtml(myName, admin, missingCount, courses.length, seededCount, myCoordProgrammes.length > 0);
   wireReportControls();
   wireTabs(admin);
 
@@ -515,7 +516,7 @@ function cieCardHtml(item, editable, evalMethods) {
 }
 
 
-function appShellHtml(myName, admin, missingCount, totalCourses, seededCount) {
+function appShellHtml(myName, admin, missingCount, totalCourses, seededCount, isCoordinator) {
   return `
     <div class="page-head">
       <div>
@@ -548,7 +549,7 @@ function appShellHtml(myName, admin, missingCount, totalCourses, seededCount) {
         </select>
         <input type="search" id="filterSearch" placeholder="Search course, code, or lead" />
         <label class="toggle-chip" style="${myName ? "" : "display:none;"}">
-          <input type="checkbox" id="filterMine" />
+          <input type="checkbox" id="filterMine" ${myName && !admin && !isCoordinator ? "checked" : ""} />
           My courses only
         </label>
         <label class="toggle-chip">

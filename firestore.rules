@@ -10,13 +10,23 @@ service cloud.firestore {
 
     // Only designated coordinators/admins can initialize or resync.
     // Keep this list synchronized with ADMIN_EMAILS in firebase-config.js.
+    // Beyond this hardcoded list, any of these admins can add MORE full
+    // admins via Settings → "Portal Admins" — stored at
+    // settings/portalAdmins, checked here so their permissions actually
+    // take effect (not just show up in the UI).
     function isAdmin() {
       return isAuthenticated() &&
              request.auth.token.email != null &&
-             request.auth.token.email in [
-               'basavarajp@rvu.edu.in',
-                'bbpatilcs@gmail.com'
-             ];
+             (
+               request.auth.token.email in [
+                 'basavarajp@rvu.edu.in',
+                 'bbpatilcs@gmail.com'
+               ] ||
+               (
+                 exists(/databases/$(database)/documents/settings/portalAdmins) &&
+                 request.auth.token.email in get(/databases/$(database)/documents/settings/portalAdmins).data.emails
+               )
+             );
     }
 
     // A programme coordinator (set via the admin "Coordinator Mapping" tool,
@@ -161,27 +171,6 @@ service cloud.firestore {
                            'ictTools',
                            'cie1',
                            'cie3',
-                           'updatedBy',
-                           'updatedAt'
-                         ]);
-      allow delete: if false;
-    }
-
-    // ------------------------------------------------------------
-    // Portion (Syllabus) Coverage — week-wise cumulative classes-
-    // taken and syllabus-% covered, per section. Same trust model
-    // as `sections`/`tlpEntries`.
-    // ------------------------------------------------------------
-    match /portionCoverage/{id} {
-      allow read: if isAuthenticated();
-      allow create: if isAdmin();
-      allow update: if isAuthenticated() &&
-                       request.resource.data.diff(resource.data)
-                         .affectedKeys()
-                         .hasOnly([
-                           'weeks',
-                           'totalClassesAllotted',
-                           'portionToComplete',
                            'updatedBy',
                            'updatedAt'
                          ]);
