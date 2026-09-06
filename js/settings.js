@@ -1,13 +1,15 @@
-import { requireAuth, isEffectiveAdmin } from "./auth.js";
+import { requireAuth, isAdmin, isEffectiveAdmin } from "./auth.js";
 import { renderSharedTopbar } from "./topbar.js";
 import { PROGRAMME_GROUPS, loadCieCourseData, flattenCieCourses } from "./cie-data.js";
 import { loadCourseData, flattenCourses } from "./data.js";
 import { uniqueSemesters } from "./section-reports.js";
+import { WEEK_COUNT } from "./portion-data.js";
 import {
   fetchCoordinators, setCoordinator,
   fetchFacultyDirectory, fetchDeadlines, setDeadlines,
   queueNotification, fetchRecentNotifications,
   fetchPortalAdmins, setPortalAdmins,
+  fetchPortionWeeks, setPortionWeeks,
 } from "./store.js";
 
 // The six fields tracked per semester: separate QP-submission and
@@ -21,15 +23,50 @@ const DEADLINE_FIELDS = [
   { key: "cie3Marks", label: "CIE-3 Marks Entry" },
 ];
 
+// Bump this string whenever settings.js changes — shown on-page so you can
+// confirm the browser is actually running the new file, not a cached copy.
+const SETTINGS_BUILD = "2026-09-01-diag1";
+
 async function main() {
   const user = await requireAuth();
   if (!user) return;
 
   const admin = await isEffectiveAdmin(user.email);
+  const hardcodedAdmin = isAdmin(user.email);
 
-  if (!admin) {
+  // Fetch coordinators FIRST — a programme coordinator (not just a full
+  // admin) needs access to Settings too, since Submission Deadlines and
+  // Portion Coverage's Week Schedule are exactly what coordinators are
+  // expected to maintain. The empty-state message below has always said
+  // "coordinators/admins" — this makes that actually true.
+  const coordinatorsForGate = await fetchCoordinators();
+  const myCoordProgrammes = Object.entries(coordinatorsForGate)
+    .filter(([, c]) => c && c.email && c.email.toLowerCase() === user.email.toLowerCase())
+    .map(([g]) => g);
+  const isCoordinator = myCoordProgrammes.length > 0;
+
+  // Always-visible diagnostic — shows even if the access gate below blocks
+  // the rest of the page, so "it's not working" becomes a checkable fact
+  // instead of a guess. If any line here doesn't match what you expect,
+  // the browser is very likely running an OLD cached version of this file
+  // — hard refresh (Cmd+Shift+R / Ctrl+Shift+R) before reporting a bug.
+  const diagnosticHtml = `
+    <div class="panel" style="border-color:var(--brass);">
+      <div class="panel__head"><h2>Access Diagnostic</h2>
+        <span style="font-size:11px;color:var(--ink-soft);">settings.js build: ${SETTINGS_BUILD}</span>
+      </div>
+      <div class="panel__body" style="font-size:13px;line-height:1.9;">
+        <div>Signed in as: <strong>${escapeHtml(user.email)}</strong></div>
+        <div>Matches hardcoded admin list: <strong style="color:${hardcodedAdmin ? "var(--green)" : "var(--red)"};">${hardcodedAdmin ? "YES" : "NO"}</strong></div>
+        <div>Full admin (hardcoded OR Portal Admins list): <strong style="color:${admin ? "var(--green)" : "var(--red)"};">${admin ? "YES" : "NO"}</strong></div>
+        <div>Programme coordinator: <strong style="color:${isCoordinator ? "var(--green)" : "var(--ink-soft)"};">${isCoordinator ? myCoordProgrammes.join(", ") : "NO"}</strong></div>
+        <div style="margin-top:8px;font-size:12px;color:var(--ink-soft);">If "Signed in as" shows the wrong email, or the YES/NO values look wrong for who you are, hard-refresh this page first. If they're still wrong after that, this is a real bug — screenshot this box and report it exactly as shown.</div>
+      </div>
+    </div>`;
+
+  if (!admin && !isCoordinator) {
     document.getElementById("loadingVeil").remove();
-    document.getElementById("appRoot").innerHTML = `
+    document.getElementById("appRoot").innerHTML = diagnosticHtml + `
       <div class="empty-state">
         <h3>Settings is for coordinators/admins</h3>
         <p>If you think you should have access here, ask a coordinator to add you as a programme coordinator, or contact the portal admin.</p>
@@ -38,9 +75,9 @@ async function main() {
     return;
   }
 
-  const [coordinators, facultyDirectory, deadlines, notifications, courseData, cieCourseData, portalAdmins] = await Promise.all([
-    fetchCoordinators(), fetchFacultyDirectory(), fetchDeadlines(), fetchRecentNotifications(),
-    loadCourseData(), loadCieCourseData(), fetchPortalAdmins(),
+  const [coordinators, facultyDirectory, deadlines, notifications, courseData, cieCourseData, portalAdmins, portionWeeks] = await Promise.all([
+    Promise.resolve(coordinatorsForGate), fetchFacultyDirectory(), fetchDeadlines(), fetchRecentNotifications(),
+    loadCourseData(), loadCieCourseData(), fetchPortalAdmins(), fetchPortionWeeks(),
   ]);
 
   // Union of every semester value used across both trackers (I/III/V/VII,
@@ -53,24 +90,82 @@ async function main() {
   renderSharedTopbar(user, { admin, onRefresh: refreshAll });
 
   document.getElementById("loadingVeil").remove();
-  document.getElementById("appRoot").innerHTML = shellHtml(semesters);
+  document.getElementById("appRoot").innerHTML = diagnosticHtml + shellHtml(semesters, admin, isCoordinator);
 
   renderCoordinatorPanel(coordinators);
   renderDeadlinesPanel(deadlines, semesters);
   renderNotifyPanel(facultyDirectory, deadlines, semesters);
   renderNotificationsLog(notifications);
   renderPortalAdminsPanel(portalAdmins);
+  renderPortionWeeksPanel(portionWeeks, semesters);
   renderRecommendationsPanel();
 
   async function refreshAll() {
-    const [c, f, d, n, pa] = await Promise.all([
-      fetchCoordinators(), fetchFacultyDirectory(), fetchDeadlines(), fetchRecentNotifications(), fetchPortalAdmins(),
+    const [c, f, d, n, pa, pw] = await Promise.all([
+      fetchCoordinators(), fetchFacultyDirectory(), fetchDeadlines(), fetchRecentNotifications(), fetchPortalAdmins(), fetchPortionWeeks(),
     ]);
     renderCoordinatorPanel(c);
     renderDeadlinesPanel(d, semesters);
     renderNotifyPanel(f, d, semesters);
     renderNotificationsLog(n);
     renderPortalAdminsPanel(pa);
+    renderPortionWeeksPanel(pw, semesters);
+  }
+
+  // ---------- Portion Coverage: per-semester week From/To dates ----------
+
+  function renderPortionWeeksPanel(portionWeeks, semesterList) {
+    const el = document.getElementById("portionWeeksPanel");
+    if (!el) return;
+
+    const bySemester = { ...(portionWeeks.bySemester || {}) };
+    const selectEl = document.getElementById("pcWeekSemesterSelect");
+    selectEl.innerHTML = semesterList.map((s) => `<option>${escapeHtml(String(s))}</option>`).join("");
+
+    const drawGrid = (sem) => {
+      const sched = bySemester[sem] || { academicYear: "", weeks: [] };
+      const weeks = sched.weeks && sched.weeks.length === WEEK_COUNT
+        ? sched.weeks
+        : Array.from({ length: WEEK_COUNT }, () => ({ from: "", to: "" }));
+
+      document.getElementById("pcAcademicYear").value = sched.academicYear || "";
+      const grid = document.getElementById("pcWeekDatesGrid");
+      grid.innerHTML = weeks.map((w, i) => `
+        <div style="border:1px solid var(--line);border-radius:6px;padding:8px;">
+          <label style="display:block;font-size:10px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);margin-bottom:4px;">Week ${i + 1}</label>
+          <div style="display:flex;gap:4px;">
+            <input type="date" class="pc-week-from-input" data-week="${i}" value="${escapeAttr(w.from || "")}" style="flex:1;padding:5px 6px;border:1px solid var(--line);border-radius:4px;font-size:11.5px;" />
+            <input type="date" class="pc-week-to-input" data-week="${i}" value="${escapeAttr(w.to || "")}" style="flex:1;padding:5px 6px;border:1px solid var(--line);border-radius:4px;font-size:11.5px;" />
+          </div>
+        </div>`).join("");
+    };
+
+    drawGrid(selectEl.value);
+    selectEl.onchange = () => drawGrid(selectEl.value);
+
+    document.getElementById("savePortionWeeksBtn").onclick = async (e) => {
+      const btn = e.currentTarget;
+      const sem = selectEl.value;
+      const grid = document.getElementById("pcWeekDatesGrid");
+      const froms = [...grid.querySelectorAll(".pc-week-from-input")].sort((a, b) => Number(a.dataset.week) - Number(b.dataset.week));
+      const tos = [...grid.querySelectorAll(".pc-week-to-input")].sort((a, b) => Number(a.dataset.week) - Number(b.dataset.week));
+      const weeks = froms.map((f, i) => ({ from: f.value, to: tos[i].value }));
+      const academicYear = document.getElementById("pcAcademicYear").value.trim();
+
+      bySemester[sem] = { academicYear, weeks };
+
+      btn.disabled = true;
+      btn.textContent = "Saving\u2026";
+      try {
+        await setPortionWeeks(bySemester, user);
+        btn.textContent = "Saved \u2713";
+      } catch (err) {
+        console.error(err);
+        alert("Could not save the week schedule. Check your connection and try again.");
+      } finally {
+        setTimeout(() => { btn.textContent = "Save Week Schedule"; btn.disabled = false; }, 1000);
+      }
+    };
   }
 
   // ---------- Portal Admins (full access, not programme-scoped) ----------
@@ -78,6 +173,8 @@ async function main() {
   function renderPortalAdminsPanel(admins) {
     const el = document.getElementById("portalAdminsPanel");
     if (!el) return;
+
+    const statusEl = document.getElementById("portalAdminsStatus");
 
     const draw = (current) => {
       const emails = current.emails || [];
@@ -92,34 +189,58 @@ async function main() {
 
       listEl.querySelectorAll(".portal-admin-remove").forEach((btn) => {
         btn.addEventListener("click", async () => {
+          btn.disabled = true;
           const idx = Number(btn.dataset.index);
           const nextEmails = (current.emails || []).filter((_, i) => i !== idx);
-          await setPortalAdmins(nextEmails, user);
-          current.emails = nextEmails;
-          draw(current);
+          try {
+            await setPortalAdmins(nextEmails, user);
+            current.emails = nextEmails;
+            if (statusEl) statusEl.textContent = "";
+            draw(current);
+          } catch (err) {
+            console.error(err);
+            if (statusEl) { statusEl.textContent = "Could not remove that admin — check your connection (or that Firestore rules were deployed) and try again."; statusEl.style.color = "var(--red)"; }
+            btn.disabled = false;
+          }
         });
       });
     };
 
     draw(admins);
+    if (!admins.emails || admins.emails.length === 0) {
+      if (statusEl) { statusEl.textContent = "No portal admins on file yet — the list above will populate once you add one."; statusEl.style.color = "var(--ink-soft)"; }
+    }
 
     document.getElementById("addPortalAdminBtn").onclick = async () => {
+      const btn = document.getElementById("addPortalAdminBtn");
       const input = document.getElementById("newPortalAdminInput");
       const email = input.value.trim().toLowerCase();
       if (!email || !email.includes("@")) {
-        alert("Enter a valid email address.");
+        if (statusEl) { statusEl.textContent = "Enter a valid email address."; statusEl.style.color = "var(--red)"; }
         return;
       }
       const current = admins.emails || [];
       if (current.includes(email)) {
         input.value = "";
+        if (statusEl) { statusEl.textContent = `${email} is already a portal admin.`; statusEl.style.color = "var(--ink-soft)"; }
         return;
       }
       const nextEmails = [...current, email];
-      await setPortalAdmins(nextEmails, user);
-      admins.emails = nextEmails;
-      input.value = "";
-      draw(admins);
+      btn.disabled = true;
+      btn.textContent = "Adding\u2026";
+      try {
+        await setPortalAdmins(nextEmails, user);
+        admins.emails = nextEmails;
+        input.value = "";
+        if (statusEl) { statusEl.textContent = `Added ${email}. They'll see admin access next time they load any page.`; statusEl.style.color = "var(--green)"; }
+        draw(admins);
+      } catch (err) {
+        console.error(err);
+        if (statusEl) { statusEl.textContent = "Could not save — check your connection (or that Firestore rules were deployed) and try again."; statusEl.style.color = "var(--red)"; }
+      } finally {
+        btn.disabled = false;
+        btn.textContent = "+ Add Admin";
+      }
     };
   }
 
@@ -315,9 +436,34 @@ function shellHtml(semesters) {
           <input type="email" id="newPortalAdminInput" placeholder="name@rvu.edu.in" style="flex:1;max-width:320px;padding:6px 9px;border:1px solid var(--line);border-radius:5px;font-size:13px;" />
           <button type="button" class="btn btn--outline btn--sm" id="addPortalAdminBtn">+ Add Admin</button>
         </div>
+        <div id="portalAdminsStatus" style="font-size:12px;margin-top:8px;"></div>
       </div>
     </div>
     <div id="portalAdminsPanel"></div>
+
+    <div class="panel">
+      <div class="panel__head"><h2>Portion Coverage &mdash; Week Schedule (per Semester)</h2>
+        <span style="font-size:12px;color:var(--ink-soft);">From/To dates for each of the 16 weeks, set separately per semester &mdash; e.g. Semester I's academic calendar can differ from Semester III's.</span>
+      </div>
+      <div class="panel__body">
+        <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:end;margin-bottom:14px;">
+          <div>
+            <label style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);margin-bottom:3px;">Semester</label>
+            <select id="pcWeekSemesterSelect" style="padding:7px 9px;border:1px solid var(--line);border-radius:5px;"></select>
+          </div>
+          <div style="flex:1;min-width:220px;max-width:360px;">
+            <label style="display:block;font-size:10.5px;text-transform:uppercase;letter-spacing:0.04em;color:var(--ink-soft);margin-bottom:3px;">Academic Year</label>
+            <input type="text" id="pcAcademicYear" placeholder="e.g. 2025-26 (ODD SEM)" style="width:100%;padding:7px 9px;border:1px solid var(--line);border-radius:5px;" />
+          </div>
+        </div>
+        <div id="pcWeekDatesGrid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:10px;margin-bottom:14px;"></div>
+        <div class="cie-save-row">
+          <button type="button" class="btn btn--primary btn--sm" id="savePortionWeeksBtn">Save Week Schedule</button>
+          <span class="cie-save-note">Saves only the selected semester &mdash; other semesters' schedules are untouched.</span>
+        </div>
+      </div>
+    </div>
+    <div id="portionWeeksPanel"></div>
 
     <div class="panel">
       <div class="panel__head"><h2>Programme Coordinator Mapping</h2>
