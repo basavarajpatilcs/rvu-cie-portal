@@ -1,0 +1,44 @@
+rules_version = '2';
+
+// ============================================================
+// Storage rules for the RVU CIE Tracker.
+//
+// Only ever holds one thing right now: TLP report files, under
+//   tlpReports/{sectionId}/{fileName}
+//
+// Read: any signed-in @rvu.edu.in account (matches Firestore's
+//   read rules for the rest of the portal — "viewable from the
+//   portal only" in practice means every download goes through
+//   this same signed-in-only gate, not an open public link).
+// Write: any signed-in account may upload (matches the low-risk,
+//   self-service trust level already used for facultyReports in
+//   firestore.rules) — max 25MB per file, common document/media
+//   types only.
+// ============================================================
+
+service firebase.storage {
+  match /b/{bucket}/o {
+
+    match /tlpReports/{sectionId}/{fileName} {
+      allow read: if request.auth != null;
+
+      allow write: if request.auth != null &&
+                      request.resource.size < 25 * 1024 * 1024 &&
+                      request.resource.contentType.matches(
+                        'application/pdf|'
+                        + 'application/msword|'
+                        + 'application/vnd\\.openxmlformats-officedocument\\..*|'
+                        + 'application/vnd\\.ms-excel|'
+                        + 'image/.*|'
+                        + 'text/plain'
+                      );
+
+      allow delete: if request.auth != null;
+    }
+
+    // Everything else stays locked.
+    match /{allPaths=**} {
+      allow read, write: if false;
+    }
+  }
+}

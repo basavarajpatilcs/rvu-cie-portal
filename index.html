@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>RVU CIE Tracker — Sign in</title>
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+<div class="login-shell">
+  <div class="login-shell__panel">
+    <div class="login-shell__brand">
+      <span class="mark">RV</span>
+      RVU CIE Tracker
+    </div>
+    <div class="login-shell__quote">
+      Every mark, <span>accounted for.</span><br />
+      Section by section.
+    </div>
+    <div class="login-shell__meta">
+      SoCSE · Odd Semester 2026&ndash;27 · Continuous Internal Evaluation
+    </div>
+  </div>
+
+  <div class="login-shell__form">
+    <div class="login-card">
+      <span class="eyebrow">Faculty &amp; Coordinator Access</span>
+      <h1>Sign in to continue</h1>
+      <p class="lead">Use your RV University Google account to mark CIE-1, CIE-2, and CIE-3 entry status for your sections.</p>
+
+      <button class="google-btn" id="googleSignIn">
+        <svg viewBox="0 0 48 48"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.6 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.8 1.1 8 3l6-6C34.5 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21 21-9.4 21-21c0-1.2-.1-2.4-.4-3.5z"/><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.8 1.1 8 3l6-6C34.5 6.1 29.6 4 24 4c-7.4 0-13.8 4.1-17.1 10.7z"/><path fill="#4CAF50" d="M24 44c5.5 0 10.4-1.9 14.1-5.1l-6.5-5.5C29.6 35 26.9 36 24 36c-5.3 0-9.7-3.4-11.3-8.1l-6.6 5.1C9.9 39.8 16.4 44 24 44z"/><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.3-2.3 4.3-4.2 5.7l6.5 5.5C40.6 36.4 44 30.8 44 24c0-1.2-.1-2.4-.4-3.5z"/></svg>
+        Continue with Google
+      </button>
+
+      <div class="domain-note">
+        <span>&#128274;</span>
+        <span>Access is limited to <strong>@rvu.edu.in</strong> accounts. Personal Google accounts will be signed out automatically.</span>
+      </div>
+
+      <div class="login-status" id="loginStatus">
+        <div class="spinner"></div>
+        <span id="loginStatusText">Signing in&hellip;</span>
+      </div>
+
+      <div class="login-error" id="loginError"></div>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+  import { signInWithGoogle, waitForUser } from "./js/auth.js";
+
+  const btn = document.getElementById("googleSignIn");
+  const statusEl = document.getElementById("loginStatus");
+  const statusText = document.getElementById("loginStatusText");
+  const errorEl = document.getElementById("loginError");
+
+  function showError(msg) {
+    errorEl.textContent = msg;
+    errorEl.classList.add("show");
+    statusEl.classList.remove("show");
+    btn.disabled = false;
+  }
+
+  // If already signed in with an allowed account, skip straight to the app.
+  waitForUser().then((user) => {
+    if (user) window.location.href = "faculty.html";
+  });
+
+  btn.addEventListener("click", async () => {
+    errorEl.classList.remove("show");
+    btn.disabled = true;
+    statusEl.classList.add("show");
+    statusText.textContent = "Signing in\u2026";
+    try {
+      await signInWithGoogle();
+      statusText.textContent = "Signed in \u2014 loading your dashboard\u2026";
+      window.location.href = "faculty.html";
+    } catch (err) {
+      if (err && err.code === "domain-not-allowed") {
+        showError(err.message);
+      } else if (err && err.code === "auth/popup-closed-by-user") {
+        statusEl.classList.remove("show");
+        btn.disabled = false;
+      } else {
+        console.error(err);
+        showError("Sign-in failed. Please try again, or contact the exam office if this continues.");
+      }
+    }
+  });
+</script>
+
+</body>
+</html>

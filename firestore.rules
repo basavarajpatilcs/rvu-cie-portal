@@ -1,0 +1,253 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Any authenticated Google/Firebase user is allowed.
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    // Only designated coordinators/admins can initialize or resync.
+    // Keep this list synchronized with ADMIN_EMAILS in firebase-config.js.
+    // Beyond this hardcoded list, any of these admins can add MORE full
+    // admins via Settings → "Portal Admins" — stored at
+    // settings/portalAdmins, checked here so their permissions actually
+    // take effect (not just show up in the UI).
+    function isAdmin() {
+      return isAuthenticated() &&
+             request.auth.token.email != null &&
+             (
+               request.auth.token.email.lower() in [
+                 'basavarajp@rvu.edu.in',
+                 'bbpatilcs@gmail.com'
+               ] ||
+               (
+                 exists(/databases/$(database)/documents/settings/portalAdmins) &&
+                 request.auth.token.email.lower() in get(/databases/$(database)/documents/settings/portalAdmins).data.emails
+               )
+             );
+    }
+
+    // A programme coordinator (set via the admin "Coordinator Mapping" tool,
+    // stored at coordinators/{programmeGroup}) can edit any course whose
+    // programmeGroup matches the programme they coordinate — not just
+    // courses where they're personally listed as course lead.
+    function isProgrammeCoordinator(programmeGroup) {
+      return isAuthenticated() &&
+             programmeGroup != null &&
+             exists(/databases/$(database)/documents/coordinators/$(programmeGroup)) &&
+             get(/databases/$(database)/documents/coordinators/$(programmeGroup)).data.email == request.auth.token.email;
+    }
+
+    // ------------------------------------------------------------
+    // Section tracker
+    // ------------------------------------------------------------
+    match /sections/{id} {
+
+      // Any logged-in user can view the tracker.
+      allow read: if isAuthenticated();
+
+      // Only coordinators can create new tracker rows.
+      allow create: if isAdmin();
+
+      // Logged-in users can update only CIE status/audit fields.
+      allow update: if isAuthenticated() &&
+                       request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasOnly([
+                           'cie1',
+                           'cie2',
+                           'cie3',
+                           'updatedBy',
+                           'updatedAt'
+                         ]);
+
+      // No one can delete tracker records.
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------
+    // CIE-2 Question Paper + Answer Key tracker
+    // ------------------------------------------------------------
+    match /qpTracking/{id} {
+
+      // Any logged-in user can view.
+      allow read: if isAuthenticated();
+
+      // Only coordinators can create new rows.
+      allow create: if isAdmin();
+
+      // Logged-in users can update only allowed fields.
+      allow update: if isAuthenticated() &&
+                       request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasOnly([
+                           'status',
+                           'updatedBy',
+                           'updatedAt'
+                         ]);
+
+      // No deletion.
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------
+    // CIE Component monitoring (CIE-1/2/3 marks, eval methods, dates)
+    // ------------------------------------------------------------
+    match /cieComponents/{id} {
+
+      // Any logged-in user can view the component report.
+      allow read: if isAuthenticated();
+
+      // Only coordinators can create new course rows (seeding, CSV import).
+      allow create: if isAdmin();
+
+      // Admins can update any field (course-lead/faculty-email reassignment,
+      // category corrections, etc. — the "edit and map course by faculty" tool).
+      // Everyone else (course leads, or a programme coordinator acting on
+      // their own programme's courses) can update only the CIE component
+      // blocks, remarks, and audit fields — never the pre-filled course facts.
+      allow update: if isAdmin() ||
+                       isProgrammeCoordinator(resource.data.programmeGroup) ||
+                       (isAuthenticated() &&
+                        request.resource.data.diff(resource.data)
+                          .affectedKeys()
+                          .hasOnly([
+                            'cie1',
+                            'cie2',
+                            'cie3',
+                            'remarks',
+                            'updatedBy',
+                            'updatedAt'
+                          ]));
+
+      // No one can delete component records.
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------
+    // Faculty directory — name ↔ email lookup used by the admin
+    // course-mapping tool and CSV bulk-mapping uploads.
+    // ------------------------------------------------------------
+    match /facultyDirectory/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ------------------------------------------------------------
+    // Programme coordinators — one per broad programme group.
+    // ------------------------------------------------------------
+    match /coordinators/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ------------------------------------------------------------
+    // Settings — submission deadlines (admin-writable, everyone can
+    // read so the portal can display "due" banners) and general
+    // portal settings.
+    // ------------------------------------------------------------
+    match /settings/{id} {
+      allow read: if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // ------------------------------------------------------------
+    // Teaching-Learning Pedagogy (TLP) — per-section pedagogy type
+    // (min 3, enforced client-side) + CIE-1/CIE-3 pedagogy &
+    // assessment style. Same trust model as `sections`: any signed-in
+    // user can update the editable fields on any row; only admins
+    // seed new rows.
+    // ------------------------------------------------------------
+    match /tlpEntries/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+      allow update: if isAuthenticated() &&
+                       request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasOnly([
+                           'pedagogyTypes',
+                           'ictTools',
+                           'cie1',
+                           'cie3',
+                           'updatedBy',
+                           'updatedAt'
+                         ]);
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------
+    // Faculty report submissions (TLP tab) — link-only data (Google
+    // Drive links, etc.), so unlike the other trackers any signed-in
+    // user can create their own row directly (no admin seeding step).
+    // Only the `reports` array (plus audit fields) can ever be
+    // updated — the pre-filled section facts are locked after creation.
+    // ------------------------------------------------------------
+    match /facultyReports/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated();
+      allow update: if isAdmin() ||
+                       (isAuthenticated() &&
+                        request.resource.data.diff(resource.data)
+                          .affectedKeys()
+                          .hasOnly(['reports', 'updatedBy', 'updatedAt']));
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------
+    // Portion (Syllabus) Coverage — week-wise cumulative classes-
+    // taken and syllabus-% covered, per section. Same trust model
+    // as `sections`/`tlpEntries`.
+    // ------------------------------------------------------------
+    match /portionCoverage/{id} {
+      allow read: if isAuthenticated();
+      allow create: if isAdmin();
+      allow update: if isAuthenticated() &&
+                       request.resource.data.diff(resource.data)
+                         .affectedKeys()
+                         .hasOnly([
+                           'weeks',
+                           'totalClassesAllotted',
+                           'portionToComplete',
+                           'updatedBy',
+                           'updatedAt'
+                         ]);
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------
+    // Notifications — outgoing email queue. Admins queue them from
+    // the Settings page; a Cloud Function (running with the Admin
+    // SDK, which bypasses these rules) sends the mail and flips
+    // `status`. Nothing in the browser ever reads another admin's
+    // queued recipients other than admins themselves.
+    // ------------------------------------------------------------
+    match /notifications/{id} {
+      allow read: if isAdmin();
+      allow create: if isAdmin();
+      allow update: if false;
+      allow delete: if false;
+    }
+
+    // ------------------------------------------------------------
+    // Faculty ↔ Login account mapping
+    // ------------------------------------------------------------
+    match /facultyLinks/{uid} {
+
+      // Any logged-in user can read.
+      allow read: if isAuthenticated();
+
+      // A user can only create/update their own faculty link.
+      allow write: if isAuthenticated() &&
+                      request.auth.uid == uid;
+    }
+
+    // ------------------------------------------------------------
+    // Deny everything else
+    // ------------------------------------------------------------
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
